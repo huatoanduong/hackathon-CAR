@@ -18,7 +18,7 @@ to do that they can't do today?]
 ### Where It Goes
 - Frontend component: [e.g., MapView.jsx — add badge to station markers]
 - Backend endpoint: [e.g., GET /stations should return availability_count field]
-- Data: [e.g., data/ev_stations.json needs an available_slots field]
+- Data: [e.g., data/ev-stations.raw.json needs an available_slots field]
 
 ### Acceptance Criteria
 - [ ] [Specific, testable criterion 1]

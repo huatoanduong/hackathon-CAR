@@ -63,9 +63,10 @@
 
 ## Data
 
-- [x] EV station data fetching script (`scripts/fetch_ev_stations.py`)
-- [~] EV station dataset in `data/` (status unknown — verify files exist)
-- [ ] Vehicle specs dataset in `data/vehicles.json`
+- [x] EV station data fetching script (`scripts/fetch_ev_stations.py`) → `data/ev-stations.raw.json`
+- [x] EV car/vehicle data fetching script (`scripts/fetch_ev_cars.py`) → `data/ev-cars.raw.json`
+- [~] EV station dataset in `data/` (verify `ev-stations.raw.json` is populated)
+- [~] EV vehicle dataset in `data/` (verify `ev-cars.raw.json` is populated)
 
 ---
 

@@ -64,7 +64,14 @@ To refresh EV station data:
 ```bash
 cd scripts
 python fetch_ev_stations.py
-# → writes to data/ev_stations.json
+# → writes to data/ev-stations.raw.json
+```
+
+To refresh EV vehicle/car model data:
+
+```bash
+python fetch_ev_cars.py
+# → writes to data/ev-cars.raw.json
 ```
 
 Python dependencies (install with pip):

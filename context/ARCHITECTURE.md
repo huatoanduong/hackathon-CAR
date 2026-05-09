@@ -74,8 +74,8 @@ export async function planRoute(origin, destination, vehicle, battery, threshold
 
 ```
 data/
-├── ev_stations.json      ← EV charging station locations (GeoJSON or array)
-└── vehicles.json         ← EV vehicle models with range/battery specs
+├── ev-stations.raw.json  ← EV charging station locations (from fetch_ev_stations.py)
+└── ev-cars.raw.json      ← Multi-brand EV vehicle specs (from fetch_ev_cars.py)
 ```
 
 - **Treat `data/` as read-only.** Agents must not modify these files.
@@ -88,7 +88,8 @@ data/
 
 ```
 scripts/
-└── fetch_ev_stations.py   ← Pulls EV station data from Google My Maps
+├── fetch_ev_stations.py   ← Pulls EV station data from Google My Maps KML
+└── fetch_ev_cars.py       ← Pulls multi-brand EV model specs
 ```
 
 Scripts are standalone utilities. They are not imported by the frontend or backend.
