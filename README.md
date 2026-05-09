@@ -91,3 +91,17 @@ Source map KML:
 ```
 https://www.google.com/maps/d/kml?mid=1h-GUae7-bU6YfRmNcxkNnKHJBwZnXWE&forcekml=1
 ```
+
+## EV Car Dataset
+
+Write a curated multi-brand EV model snapshot:
+
+```bash
+python scripts/fetch_ev_cars.py
+```
+
+Default output:
+
+```text
+data/ev-cars.raw.json
+```
