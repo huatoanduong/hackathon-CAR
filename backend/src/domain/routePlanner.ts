@@ -14,8 +14,8 @@ const MAX_PLANNING_ITERATIONS = 8;
 
 export class RoutePlannerService {
   constructor(
-    private readonly vehicleRepository: VehicleRepository,
-    private readonly stationRepository: StationRepository,
+    private readonly vehicleRepository: Pick<VehicleRepository, "findVehicleById">,
+    private readonly stationRepository: Pick<StationRepository, "findStationsNearRoutePoints">,
     private readonly routingProvider: RoutingProvider,
     private readonly routeCorridorRadiusKm = 3
   ) {}
