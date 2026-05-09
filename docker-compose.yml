@@ -1,4 +1,11 @@
 services:
+  web:
+    build:
+      context: ./web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+services:
   db:
     image: postgis/postgis:16-3.4
     environment:
