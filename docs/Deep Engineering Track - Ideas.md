@@ -1,700 +1,512 @@
----
-type: research
-status: inbox
-topic: Deep Engineering Track
-created: 2026-05-09
----
+# EV Charging Intelligence System
+
+User idea:
+
+- Recommend best charging stations.
+- Predict station waiting time.
+- Optimize route plus charging plan.
 
-# Deep Engineering Track - Ideas
+Improved project framing:
+
+> Build an AI-native EV charging decision engine that recommends where, when, and how long to charge by combining ranking models, time-series demand forecasting, route optimization, and simulation-based evaluation.
+
+This is stronger than a normal recommendation system because it becomes a real decision system under constraints:
+
+- Battery is limited.
+- Stations have uncertain availability.
+- Chargers have different power.
+- Route choice affects arrival battery.
+- Waiting time changes over time.
+- User preference matters.
+- The system must trade off time, cost, reliability, and risk.
+
+## Why This Fits The Deep Engineering Track
+
+The basic version is a recommendation system. The deep version is a multi-layer optimization platform.
+
+It can show:
+
+- Recommendation system depth through candidate retrieval, ranking, personalization, and evaluation.
+- Data mining depth through feature engineering and offline metrics.
+- ML depth through demand/wait-time prediction.
+- Algorithmic depth through shortest path, A*, constrained routing, and vehicle routing.
+- Systems depth through real-time inference, simulation, monitoring, and scalable runners.
+- Codex depth through research agents, model comparison agents, experiment runners, and adversarial evaluators.
+
+## Strong Project Name
+
+**ChargeRoute AI**
+
+One-liner:
+
+> ChargeRoute AI recommends the best EV charging plan by ranking stations, forecasting queue time, and optimizing the route under battery, charger, traffic, and user preference constraints.
+
+Alternative names:
+
+- ChargePilot
+- EVRouteRank
+- VoltPath
+- ChargeGraph
+- GridAware EV Planner
+- PlugRank
+- RangeGuard
+
+## Core Problem
+
+Given:
+
+- User location.
+- Destination.
+- Current battery percentage.
+- Vehicle model.
+- Battery capacity.
+- Energy consumption rate.
+- Current time.
+- Charger network.
+- Station location.
+- Charger type and power.
+- Station availability.
+- Historical usage.
+- Check-ins.
+- Rating.
+- Price.
+- Traffic or estimated travel time.
+
+Return:
+
+- Top-k recommended charging stations.
+- Estimated wait time per station.
+- Estimated arrival battery.
+- Estimated charging duration.
+- Total trip time.
+- Risk score.
+- Recommended route.
+- Explanation for each recommendation.
 
-Requirement:
+## Better Output Design
 
-> Build something extremely deep with Engineering prowess.
-> Leverage Codex's extreme research capabilities.
-> Leverage Codex Auto Runners' massive scalability.
-> Show your depth.
-> Judges are engineering veterans who could have built complex systems without AI. You will be tested.
+Instead of only outputting `Top-k charging stations`, output a ranked charging plan:
 
-## What Judges Probably Care About
+For each option:
+
+- Station name.
+- Distance detour.
+- ETA to station.
+- Expected wait time.
+- Expected charge time.
+- Battery on arrival.
+- Battery after charging.
+- Total trip time.
+- Charger compatibility.
+- Reliability score.
+- Cost estimate.
+- Why this station is recommended.
+
+Example:
+
+1. Station A
+   - 8.2 km detour.
+   - Arrival battery: 18%.
+   - Wait time: 6 min.
+   - Charge time: 22 min.
+   - Total delay: 35 min.
+   - Reliability: 0.91.
+   - Reason: Fast charger, low predicted queue, safe arrival battery.
+
+2. Station B
+   - 3.1 km detour.
+   - Arrival battery: 12%.
+   - Wait time: 19 min.
+   - Charge time: 45 min.
+   - Total delay: 68 min.
+   - Reliability: 0.73.
+   - Reason: Close station, but slower charger and higher queue risk.
 
-The project should not feel like a wrapper around an LLM. It should feel like a serious engineering system where AI enables a scale, feedback loop, or reasoning workflow that would be painful for humans to operate manually.
+## System Architecture
 
-Strong signals:
+### Layer 1 - Data Layer
 
-- Real architecture, not just prompt chains.
-- Hard technical domain with measurable correctness.
-- Parallel work orchestration.
-- Reproducible evaluation.
-- Failure handling.
-- Observability.
-- Clear tradeoffs.
-- Useful output that can be inspected, tested, and challenged.
+Collect or simulate:
 
-Weak signals:
+- Station metadata.
+- Charger power and connector type.
+- User check-ins.
+- Ratings.
+- Historical session logs.
+- Time-of-day usage.
+- Day-of-week usage.
+- Holiday/event calendar.
+- Vehicle battery specs.
+- Road network.
+- Travel time matrix.
+- Weather if available.
+- Electricity price if available.
+
+If real data is limited, build a simulator:
+
+- Generate realistic users.
+- Generate station demand patterns.
+- Generate queue behavior.
+- Generate charger failures.
+- Generate rush-hour traffic.
+
+This is useful for benchmarking and judge demos.
+
+### Layer 2 - Candidate Generation
+
+Before ranking, filter impossible or bad candidates.
+
+Rules:
 
-- Chatbot UI.
-- Generic code generation.
-- Vague "AI assistant for X".
-- No tests.
-- No measurable benchmark.
-- No hard systems problem.
-- No reason Codex Auto Runners matter.
+- Station must be reachable with current battery plus safety margin.
+- Charger must match vehicle connector.
+- Station must not be too far from route unless necessary.
+- Station must have enough charging power for user's need.
+
+Algorithms:
+
+- Geospatial radius search.
+- Route corridor search.
+- Graph search over road network.
+- Battery-constrained reachability.
 
-## North Star
+Output:
 
-Build a system where Codex is not the product. Codex is the engineering workforce, researcher, test writer, adversary, debugger, and migration assistant operating inside a serious technical pipeline.
+- 20-100 candidate stations.
 
-The demo should prove:
+### Layer 3 - Wait-Time Prediction
 
-1. The system can decompose a complex engineering problem.
-2. Many agents/runners can safely work in parallel.
-3. Outputs are automatically verified.
-4. Bad outputs are rejected or repaired.
-5. The final result is something a senior engineer respects.
+Predict station congestion and queue time.
 
-## Idea 1 - Autonomous Legacy System Modernizer
+Features:
+
+- Hour of day.
+- Day of week.
+- Weekend flag.
+- Holiday flag.
+- Nearby traffic.
+- Historical sessions.
+- Current check-ins.
+- Number of chargers.
+- Charger speed.
+- Average session duration.
+- Station rating.
+- Nearby station density.
+- Weather.
+- Event density if available.
 
-Build a migration engine that takes an old, messy codebase and upgrades it across language, framework, tests, and architecture while preserving behavior.
+Models:
+
+- Baseline: historical average by hour/day.
+- Regression: XGBoost/LightGBM.
+- Time-series: ARIMA/Prophet/LSTM/TFT.
+- Queueing model: M/M/c approximation using arrival rate and service rate.
 
-Examples:
+Engineering depth:
+
+- Predict not only mean wait time, but uncertainty.
+- Example: wait time p50, p90.
+- Use p90 for risk-averse users.
 
-- Python 2 to Python 3.
-- AngularJS to modern React.
-- Express REST API to typed Fastify/NestJS.
-- JavaScript to TypeScript.
-- Monolith modules into service boundaries.
+Output:
 
-Why this is deep:
+- Expected wait time.
+- Queue risk.
+- Confidence interval.
 
-- Requires static analysis, dynamic tests, dependency analysis, codemods, semantic preservation, and incremental verification.
-- Veterans know migrations are painful because correctness is hidden in behavior, not syntax.
-- Auto Runners matter because each module can be migrated, tested, reviewed, and repaired independently.
+### Layer 4 - Station Ranking
 
-System architecture:
+Rank candidate stations using Learning-to-Rank.
 
-- Codebase ingestor builds dependency graph.
-- Baseline behavior recorder captures test output, API responses, golden files, and runtime traces.
-- Planner splits migration into safe work units.
-- Codex runners migrate independent modules.
-- Verification runners run tests, diff behavior, fuzz endpoints, and inspect type errors.
-- Review runners critique patches.
-- Merge coordinator accepts only changes that satisfy gates.
+Models:
 
-Demo:
+- Content-based recommendation for cold start.
+- Collaborative filtering for user preference.
+- LightGBM LambdaRank or XGBoost ranker.
+- Hybrid ranking model.
 
-- Start with an intentionally ugly legacy app.
-- Show dependency graph and migration plan.
-- Run parallel agents across modules.
-- Show failed migrations being rejected.
-- Show final app passing old behavior tests and new type checks.
+Features:
 
-Judge test points:
+- User-station distance.
+- Station-destination alignment.
+- Detour time.
+- Predicted wait time.
+- Charger power.
+- Price.
+- Rating.
+- Check-in count.
+- Historical user preference.
+- Vehicle compatibility.
+- Battery on arrival.
+- Expected total delay.
+- Station reliability.
+- Density of nearby backup stations.
 
-- "How do you know behavior is preserved?"
-- "What happens when two agents edit related files?"
-- "How do you prevent broad rewrites?"
-- "How does rollback work?"
+Labels for training:
 
-Depth enhancers:
+- User selected station.
+- User completed charge.
+- User skipped recommendation.
+- Rating after visit.
+- Session success/failure.
+- Total time satisfaction.
 
-- Add mutation testing.
-- Add API contract replay.
-- Add semantic diff summaries.
-- Add per-runner ownership boundaries.
-- Add confidence scoring per file.
+Ranking objective:
 
-## Idea 2 - Distributed Research-to-Implementation Engine
+- Maximize probability of successful, low-wait, useful charging session.
 
-Build a system that researches a technical topic, extracts algorithms from papers/docs, implements competing variants, benchmarks them, and produces a verified engineering report.
+Metrics:
 
-Example domains:
+- NDCG@k.
+- MAP@k.
+- Precision@k.
+- Recall@k.
+- HitRate@k.
+- MRR.
+- Regret versus optimal simulated decision.
 
-- Vector index algorithms.
-- Cache eviction policies.
-- CRDT implementations.
-- Rate limiter algorithms.
-- SAT solver heuristics.
-- Transaction isolation simulators.
+### Layer 5 - Route and Charging Optimization
 
-Why this is deep:
+This is what makes the project stronger than a normal recommender.
 
-- Combines research, implementation, benchmarking, and adversarial testing.
-- Shows Codex as a scalable research and engineering lab.
-- Judges can inspect whether claims are backed by code and measurements.
+Problem:
 
-System architecture:
+Find route and charging plan minimizing:
 
-- Research planner creates questions and source targets.
-- Research runners summarize primary sources.
-- Implementation runners build variants behind one interface.
-- Test runners generate unit, property, fuzz, and benchmark tests.
-- Adversarial runners search for edge cases.
-- Report generator links claims to benchmark data and source material.
+- Travel time.
+- Wait time.
+- Charging time.
+- Detour.
+- Cost.
+- Risk of running out of battery.
 
-Demo:
+Subject to:
 
-- Pick one hard topic: CRDT text editing, LSM tree compaction, or consistent hashing.
-- Generate 3-5 implementations.
-- Benchmark across workloads.
-- Show where each implementation fails or wins.
-- Produce a final engineering decision memo.
+- Battery never below safety threshold.
+- Charger compatible.
+- Station reachable.
+- Destination reachable after charge.
+- User constraints.
 
-Judge test points:
+Algorithms:
 
-- "Can I reproduce your benchmark?"
-- "Are your workloads realistic?"
-- "Did the system discover a non-obvious tradeoff?"
-- "What assumptions did the research agents get wrong?"
+- Dijkstra with battery state.
+- A* with energy-aware heuristic.
+- Multi-objective shortest path.
+- Dynamic programming.
+- Vehicle Routing Problem variant.
+- Reinforcement Learning for adaptive charging policy.
 
-Depth enhancers:
+State:
 
-- Use property-based testing.
-- Add benchmark variance analysis.
-- Track citations to specific claims.
-- Produce flamegraphs or perf traces.
-- Include a "failed approaches" appendix.
+- Current node.
+- Battery level.
+- Current time.
+- Planned station visits.
 
-## Idea 3 - Multi-Agent Kernel Bug Triage and Patch Lab
+Edge cost:
 
-Build an automated lab that ingests real low-level bug reports, reproduces failures, bisects commits, proposes patches, and validates fixes in isolated runners.
+- Drive time.
+- Energy consumed.
+- Traffic.
+- Charging delay.
+- Queue risk.
 
-Scope can be narrowed to:
+Output:
 
-- A toy operating system.
-- A database storage engine.
-- A networking stack simulator.
-- A filesystem implementation.
-- A WebAssembly runtime.
+- Best single-stop plan.
+- Best multi-stop plan.
+- Backup station plan.
 
-Why this is deep:
+Deep extension:
 
-- Low-level debugging is hard.
-- Reproduction and minimization are engineering-heavy.
-- It requires observability, isolation, deterministic test harnesses, and patch validation.
+- Optimize under uncertainty.
+- Example: station may become crowded by arrival time.
+- Use robust optimization or Monte Carlo simulation.
 
-System architecture:
+### Layer 6 - Explanation Engine
 
-- Bug report parser extracts symptoms and reproduction hints.
-- Reproduction runner creates failing test.
-- Minimizer reduces failure case.
-- Bisect runner identifies suspicious change.
-- Patch runners propose independent fixes.
-- Verification runners run regression, fuzz, and stress tests.
-- Arbiter selects patch with best correctness/minimality tradeoff.
+Judges and users need to understand the decision.
 
-Demo:
+For every recommendation, explain:
 
-- Seed 5-10 real bugs into a systems project.
-- Show the lab reproducing failures.
-- Show one bug minimized from complex scenario to tiny test.
-- Show multiple patches rejected.
-- Show final patch with regression test.
+- Why selected.
+- Why alternatives were rejected.
+- Main tradeoff.
+- Risk.
+- Confidence.
 
-Judge test points:
+Example:
 
-- "Could this patch hide the bug instead of fixing it?"
-- "What does the minimized repro prove?"
-- "How do you handle nondeterminism?"
-- "How do you keep runners isolated?"
+> Station A is ranked first because it adds only 9 minutes of detour, has a predicted 6-minute queue, supports 150kW charging, and leaves 22% battery buffer on arrival. Station B is closer but has a p90 wait time of 31 minutes.
 
-Depth enhancers:
+Use:
 
-- Deterministic replay.
-- Sanitizer integration.
-- Coverage-guided fuzzing.
-- Crash deduplication.
-- Patch minimality scoring.
+- Feature attribution.
+- SHAP for ranking model.
+- Rule-based explanation for hard constraints.
 
-## Idea 4 - Auto-Scaling Formal Spec and Test Generator
+## How To Use Codex Auto Runners
 
-Build a tool that reads an implementation, infers or drafts a formal-ish specification, then generates tests, fuzzers, and model-checking scenarios to find correctness gaps.
+This is where the project can match the requirement.
 
-Good target systems:
+Use many runners in parallel for:
 
-- Distributed lock service.
-- Job queue.
-- Cache with TTL and invalidation.
-- Payment state machine.
-- Collaborative document state.
-- Retry/backoff scheduler.
+- Researching recommendation algorithms.
+- Researching EV routing papers.
+- Implementing different rankers.
+- Implementing different wait-time models.
+- Generating synthetic data.
+- Running benchmark experiments.
+- Creating adversarial test scenarios.
+- Comparing algorithms.
+- Writing evaluation reports.
+- Finding failure cases.
 
-Why this is deep:
+Runner roles:
 
-- Senior engineers respect specification work because it finds bugs normal tests miss.
-- Codex research can study known failure modes.
-- Auto Runners can generate and test many state-machine scenarios.
+- Research runner: summarize papers and algorithms.
+- Data runner: build simulator and feature pipeline.
+- Model runner: train ranker.
+- Forecast runner: train wait-time predictor.
+- Route runner: implement A*/Dijkstra battery-aware routing.
+- Evaluation runner: benchmark NDCG, MAE, total trip time.
+- Adversarial runner: create edge cases.
+- Report runner: produce experiment summary.
 
-System architecture:
+This makes the system look like an AI-powered engineering lab, not a single model demo.
 
-- Code analyzer extracts state transitions and invariants.
-- Spec drafter creates TLA+/PlusCal-like or executable model.
-- Scenario runners generate histories.
-- Implementation runner executes same histories against real code.
-- Differential checker compares model vs implementation.
-- Repair runners propose code or spec fixes.
+## Benchmark Plan
 
-Demo:
+Offline recommendation benchmark:
 
-- Build a distributed job queue with retries, leases, cancellation, and worker crashes.
-- Ask system to infer invariants.
-- Run generated histories.
-- Find a real bug, such as double execution, lost job, or stuck lease.
-- Patch and prove with replay.
+- Train/test split by time.
+- Compare collaborative filtering, content-based, and Learning-to-Rank.
+- Metrics: NDCG@5, HitRate@5, MRR.
 
-Judge test points:
+Wait-time prediction benchmark:
 
-- "What is the boundary between inferred spec and intended behavior?"
-- "How do you avoid testing the implementation against itself?"
-- "Can the model expose bugs humans missed?"
-- "How do you shrink failing histories?"
+- Compare historical average, XGBoost, LSTM.
+- Metrics: MAE, RMSE, p90 error.
 
-Depth enhancers:
+Routing benchmark:
 
-- Add linearizability checking.
-- Add Jepsen-style history generation.
-- Add property shrinking.
-- Add visual state graph.
-- Add invariant confidence levels.
+- Compare nearest station, highest rating station, fastest charger, and optimized route plan.
+- Metrics:
+  - Total trip time.
+  - Total waiting time.
+  - Battery safety violations.
+  - Charging cost.
+  - Failed trips.
 
-## Idea 5 - Software Archaeology and Architecture Recovery System
+Simulation benchmark:
 
-Build a system that ingests an unknown large codebase and reconstructs the architecture: domains, dependencies, data flows, hidden contracts, risky modules, and refactor plan.
+- Run 10,000 synthetic trips.
+- Vary battery level, traffic, station density, charger failures, and rush-hour demand.
+- Show robust performance under stress.
 
-Why this is deep:
+## Adversarial Test Cases
 
-- Understanding unknown systems is one of the hardest senior engineering tasks.
-- It is not enough to summarize files. The system must build a defensible model.
-- Codex runners can inspect slices of the codebase in parallel and reconcile findings.
+Use these to impress judges:
 
-System architecture:
+- User has 9% battery and nearest station is crowded.
+- Fast charger is farther but saves total time.
+- Highest-rated station has incompatible connector.
+- Station looks good now but will be crowded by arrival time.
+- Road closure causes energy estimate to change.
+- Cold weather increases consumption.
+- Charger outage happens after recommendation.
+- Rural route requires multi-stop planning.
+- Dense city route has many stations but high queue uncertainty.
 
-- Static analyzer extracts imports, call graph, data models, config, routes, and ownership clues.
-- Explorer runners investigate subsystems.
-- Contradiction detector finds conflicting claims.
-- Architecture graph builder creates bounded contexts and dependency layers.
-- Risk model scores modules by churn, complexity, test coverage, and centrality.
-- Refactor planner proposes staged interventions.
+## MVP Scope
 
-Demo:
+Build this first:
 
-- Use a real open-source project with nontrivial size.
-- Hide the README from the system at first.
-- Ask it to reconstruct architecture.
-- Compare against actual docs.
-- Generate a refactor plan and verify with small patches.
+- Synthetic city map.
+- 100 charging stations.
+- 10,000 simulated charging sessions.
+- User trip request API.
+- Candidate station filtering.
+- Wait-time prediction with LightGBM/XGBoost.
+- Learning-to-Rank station ranker.
+- Battery-aware A* route planner.
+- Top-k recommendations with explanation.
+- Benchmark dashboard or report.
 
-Judge test points:
+Avoid overbuilding:
 
-- "How do you know this architecture map is not hallucinated?"
-- "Can I click from every claim to evidence?"
-- "Does it distinguish runtime dependency from import dependency?"
-- "Can it find hidden coupling?"
+- Full mobile app.
+- Real payment integration.
+- Real-time charger provider integration.
+- Full RL system in version 1.
 
-Depth enhancers:
+## Advanced Scope
 
-- Evidence-linked claims.
-- Confidence scoring.
-- Contradiction resolution.
-- Graph visualization.
-- Change impact simulator.
+Add after MVP:
 
-## Idea 6 - Autonomous Database Internals Lab
+- Real map data from OpenStreetMap.
+- Real charging station data if available.
+- Live traffic integration.
+- Multi-user simulation.
+- Dynamic pricing.
+- Charger failure prediction.
+- Reinforcement learning policy.
+- Online learning from user feedback.
+- Fleet-level optimization.
 
-Build a mini database engine and use Codex runners to research, implement, benchmark, and evolve core internals.
+## Thesis / Paper Angle
 
-Possible features:
+Possible title:
 
-- WAL.
-- B+ tree.
-- LSM tree.
-- MVCC.
-- Query planner.
-- Lock manager.
-- Snapshot isolation.
-- Crash recovery.
+> A Hybrid Learning-to-Rank and Energy-Constrained Routing Approach for EV Charging Station Recommendation
 
-Why this is deep:
+Research questions:
 
-- Database internals are a classic engineering credibility domain.
-- Correctness is testable through crash simulations, concurrency tests, and consistency checks.
-- Auto Runners can explore design alternatives in parallel.
+1. Does adding wait-time forecasting improve charging station recommendation quality?
+2. Does route-aware ranking outperform distance-based recommendation?
+3. Does battery-constrained A* reduce failed trips compared to nearest-station baselines?
+4. Which features matter most in EV charging recommendation?
+5. How robust is the system under rush hour, charger outages, and sparse station density?
 
-System architecture:
+Baseline methods:
 
-- Core database with pluggable storage/index/concurrency modules.
-- Research runners investigate algorithms.
-- Implementation runners build alternatives.
-- Chaos runners simulate crashes and concurrent transactions.
-- Benchmark runners compare throughput, latency, write amplification, and recovery time.
-- Report runner explains tradeoffs.
+- Nearest station.
+- Highest-rated station.
+- Fastest charger.
+- Lowest predicted wait.
+- Collaborative filtering.
+- Content-based ranking.
+- Learning-to-Rank only.
+- Route optimization only.
+- Hybrid model.
 
-Demo:
+Expected contribution:
 
-- Implement two storage engines: B+ tree and LSM.
-- Implement WAL and crash recovery.
-- Run random operation histories.
-- Kill process mid-write.
-- Recover and verify invariants.
+- A hybrid recommender that combines user preference, station quality, predicted congestion, and battery-aware routing.
+- A simulation benchmark for EV charging decisions.
+- An evaluation of ranking quality and trip-level utility.
 
-Judge test points:
+## Engineering Demo Script
 
-- "What are your durability guarantees?"
-- "What isolation level do you actually provide?"
-- "What happens during torn writes?"
-- "Can your benchmark be trusted?"
+1. User enters location, destination, vehicle type, and battery.
+2. System filters unreachable and incompatible stations.
+3. Wait-time model predicts queue for each station at arrival time.
+4. Ranker scores stations.
+5. Route optimizer computes total trip plan.
+6. UI/API returns top-k plans with explanation.
+7. Benchmark runner compares against baselines.
+8. Stress runner simulates rush hour and charger outage.
+9. System shows recommendation changes under new conditions.
 
-Depth enhancers:
+## Final Recommended Version
 
-- Fault injection.
-- Deterministic scheduler.
-- Write amplification metrics.
-- Page checksum.
-- Transaction history checker.
+Build:
 
-## Idea 7 - Codex Swarm CI: Parallel Code Review, Test, and Repair Platform
+> **ChargeRoute AI: a hybrid EV charging recommendation and routing engine using Learning-to-Rank, wait-time forecasting, and battery-constrained route optimization.**
 
-Build a CI platform where every pull request is reviewed by a swarm of specialized agents: security, performance, correctness, API compatibility, test quality, maintainability, and documentation.
+Core claim:
 
-Why this is deep:
+> The best charging station is not the nearest one. It is the station that minimizes total trip cost under battery, queue, charger, route, and reliability constraints.
 
-- The value is in orchestration, verification, and conflict resolution.
-- Veteran judges know code review is contextual and hard.
-- Auto Runners are directly relevant.
-
-System architecture:
-
-- PR ingestor computes changed dependency graph.
-- Specialist runners inspect different risk classes.
-- Test runners generate targeted tests.
-- Patch runners fix narrow issues.
-- Arbiter ranks findings by evidence and severity.
-- Human-facing report includes proof, repro, and patch.
-
-Demo:
-
-- Create a PR with hidden bugs: race condition, API break, perf regression, security issue, flaky test.
-- Show specialist agents finding different classes.
-- Show generated failing tests.
-- Show auto-repair for some issues.
-- Show unresolved issues escalated with evidence.
-
-Judge test points:
-
-- "How do you avoid noisy review comments?"
-- "Can findings be reproduced?"
-- "What prevents agents from fighting each other?"
-- "How do you decide severity?"
-
-Depth enhancers:
-
-- Finding deduplication.
-- Evidence-first comments.
-- Historical project memory.
-- Flake detection.
-- Risk-based runner allocation.
-
-## Idea 8 - Production Incident Simulator and Autonomous Runbook Engineer
-
-Build a system that takes a service, injects realistic production incidents, detects symptoms, writes runbooks, and validates recovery playbooks.
-
-Incident types:
-
-- Memory leak.
-- Slow dependency.
-- Partial outage.
-- Queue backlog.
-- Bad deploy.
-- Database lock contention.
-- Retry storm.
-- Cache stampede.
-
-Why this is deep:
-
-- Reliability engineering is difficult and respected.
-- It combines systems, observability, diagnosis, and operational correctness.
-- Codex runners can act as incident commanders, SREs, app engineers, and chaos testers.
-
-System architecture:
-
-- Service sandbox with telemetry.
-- Fault injector.
-- Detection runner analyzes metrics/logs/traces.
-- Diagnosis runners propose root causes.
-- Runbook writer creates remediation steps.
-- Validation runner executes runbook in fresh incident scenario.
-- Postmortem generator writes evidence-based report.
-
-Demo:
-
-- Run a microservice with queue, database, cache, and worker.
-- Inject retry storm plus slow DB.
-- Show diagnosis from telemetry.
-- Generate and execute runbook.
-- Verify SLO recovery.
-
-Judge test points:
-
-- "Was the diagnosis causal or just correlated?"
-- "Can the runbook make things worse?"
-- "How do you validate remediation?"
-- "What happens with simultaneous incidents?"
-
-Depth enhancers:
-
-- Trace correlation.
-- Blast-radius analysis.
-- SLO budget model.
-- Automated rollback.
-- Incident timeline reconstruction.
-
-## Idea 9 - Compiler Optimization Tournament
-
-Build a small compiler or query optimizer where Codex runners research and implement optimization passes, then a tournament harness validates correctness and performance.
-
-Possible domains:
-
-- SQL query optimizer.
-- Bytecode VM optimizer.
-- Tensor expression optimizer.
-- Regex engine optimizer.
-- Graph query planner.
-
-Why this is deep:
-
-- Compilers require correctness-preserving transformation.
-- Performance claims can be measured.
-- Auto Runners can compete with different optimization strategies.
-
-System architecture:
-
-- Baseline parser/interpreter.
-- Optimization pass interface.
-- Runner pool proposes passes.
-- Equivalence checker validates optimized output.
-- Benchmark harness compares workloads.
-- Tournament scoreboard tracks wins and regressions.
-
-Demo:
-
-- Build a SQL-like query engine.
-- Have agents implement predicate pushdown, projection pruning, join reordering, and index selection.
-- Use random query generation to test equivalence.
-- Show perf gains with correctness guardrails.
-
-Judge test points:
-
-- "How do you prove optimized results are equivalent?"
-- "What workloads did you benchmark?"
-- "Can an optimization regress another workload?"
-- "How does the tournament prevent overfitting?"
-
-Depth enhancers:
-
-- Cost model learning.
-- Random query generator.
-- Differential testing against SQLite.
-- Plan visualizer.
-- Regression corpus.
-
-## Idea 10 - AI-Native Distributed Systems Test Harness
-
-Build a harness that generates distributed systems scenarios, executes them under controlled faults, and asks Codex runners to explain, fix, and harden the system.
-
-Target systems:
-
-- Raft implementation.
-- Distributed cache.
-- Leader election.
-- Replicated queue.
-- Gossip membership.
-- Idempotent payment processing.
-
-Why this is deep:
-
-- Distributed systems fail in subtle interleavings.
-- Codex research can study protocol invariants.
-- Auto Runners can explore many schedules and fault combinations.
-
-System architecture:
-
-- Deterministic scheduler.
-- Network partition simulator.
-- Clock skew simulator.
-- Node crash/restart simulator.
-- History recorder.
-- Invariant checker.
-- Agent repair loop.
-
-Demo:
-
-- Implement a small Raft or leader election system.
-- Inject partitions and crashes.
-- Find split-brain or lost update.
-- Generate minimal counterexample.
-- Patch and verify across larger fault matrix.
-
-Judge test points:
-
-- "Is your scheduler deterministic?"
-- "Can you replay the failure exactly?"
-- "What invariants are checked?"
-- "How do you distinguish liveness from safety?"
-
-Depth enhancers:
-
-- Lineage-driven fault injection.
-- Minimal failing schedule shrinker.
-- Protocol invariant dashboard.
-- Model vs implementation differential checking.
-- Long-running soak tests.
-
-## Best Bets
-
-Top 3 for maximum engineering credibility:
-
-1. **AI-Native Distributed Systems Test Harness**
-   - Highest depth.
-   - Hard to fake.
-   - Great judge challenge surface.
-   - Strong use of Auto Runners for schedule and fault exploration.
-
-2. **Autonomous Database Internals Lab**
-   - Extremely respected domain.
-   - Easy to demo correctness and performance.
-   - Strong combination of research, implementation, and testing.
-
-3. **Auto-Scaling Formal Spec and Test Generator**
-   - Elegant and defensible.
-   - Shows deep reasoning instead of flashy UI.
-   - Can find real bugs in stateful systems.
-
-Most practical to build in limited time:
-
-1. **Codex Swarm CI**
-2. **Production Incident Simulator**
-3. **Research-to-Implementation Engine**
-
-Most impressive if executed well:
-
-1. **Distributed Systems Test Harness**
-2. **Database Internals Lab**
-3. **Legacy System Modernizer**
-
-## Recommended Project
-
-Build **Codex Fault Lab**:
-
-> A multi-agent engineering lab that researches distributed systems failure modes, generates deterministic fault schedules, finds invariant violations in a real implementation, shrinks failures into minimal counterexamples, and coordinates Codex runners to patch and verify the system.
-
-Target implementation:
-
-- Start with a replicated job queue or leader election service, not full Raft unless there is enough time.
-- Include a deterministic scheduler.
-- Include message delay/drop/reorder.
-- Include node crash/restart.
-- Include invariant checks.
-- Include replayable failure histories.
-- Include agent-generated patches.
-
-Core invariants:
-
-- No two leaders in same term.
-- No acknowledged job is lost.
-- A job is not completed twice.
-- Lease expires before reassignment.
-- State converges after partition heals.
-
-Why this satisfies the requirement:
-
-- **Extreme research:** agents gather and summarize failure modes from distributed systems literature, Jepsen-style testing, Raft invariants, queue semantics, and fault injection.
-- **Massive scalability:** runners explore schedules, partitions, crash points, and repair candidates in parallel.
-- **Engineering depth:** deterministic replay, invariant checking, counterexample shrinking, fault injection, CI gating, and patch arbitration.
-- **Judge-resistant:** every claim can be tested by replaying the failure history.
-
-## Demo Script
-
-1. Show the system under test: a replicated queue or leader election service.
-2. Show invariants in code.
-3. Launch the fault matrix.
-4. Runners explore schedules in parallel.
-5. A failing history is found.
-6. The system shrinks the failure from many events to a minimal trace.
-7. Codex runners propose competing fixes.
-8. Verification runners reject weak patches.
-9. Accepted patch passes replay, randomized fault tests, and regression suite.
-10. Final report explains root cause, fix, proof, and remaining risks.
-
-## Concrete Build Plan
-
-Phase 1 - Core simulation:
-
-- Implement deterministic event loop.
-- Implement nodes, messages, timers, and persistent state.
-- Implement network faults: drop, delay, duplicate, reorder, partition.
-- Implement crash and restart.
-
-Phase 2 - System under test:
-
-- Implement replicated queue or leader election.
-- Keep the protocol small enough to understand.
-- Intentionally seed 2-3 realistic bugs.
-
-Phase 3 - Invariant engine:
-
-- Define safety properties.
-- Record every event.
-- Fail fast when invariant breaks.
-- Serialize history to replay file.
-
-Phase 4 - Search:
-
-- Random schedule generation.
-- Seeded reproducibility.
-- Parallel runners.
-- Coverage tracking.
-
-Phase 5 - Shrinking:
-
-- Remove irrelevant events.
-- Reduce nodes.
-- Reduce messages.
-- Preserve failure.
-
-Phase 6 - Codex repair loop:
-
-- Assign one runner per suspected subsystem.
-- Generate patch plus regression test.
-- Verify patch against replay.
-- Run broader fault suite.
-- Compare patches.
-
-Phase 7 - Presentation:
-
-- Web dashboard or CLI TUI.
-- Show current runs, found failures, minimized traces, accepted patches.
-- Generate final engineering report.
-
-## What To Avoid
-
-- Do not build a generic agent dashboard.
-- Do not make the UI the main artifact.
-- Do not rely on subjective judge trust.
-- Do not claim formal proof unless there is actual model checking.
-- Do not hide failures; show failed patches and why they failed.
-- Do not overbuild full distributed consensus if time is limited.
-
-## Strong One-Liner
-
-Codex Fault Lab turns Codex Auto Runners into a distributed systems test organization: researchers identify known failure modes, runners explore thousands of deterministic fault schedules, and repair agents produce patches that must survive replayable counterexamples before they are accepted.
-
-## Possible Naming
-
-- Codex Fault Lab
-- Counterexample Foundry
-- SwarmCheck
-- Invariant Forge
-- Codex Jepsen Lab
-- Failure Atlas
-- ReplayOps
-- FaultSmith
-
+This direction is practical enough to build, strong enough for an AI/Data Mining thesis, and deep enough for engineering judges because it combines ML, ranking, forecasting, graph algorithms, simulation, benchmarking, and scalable agent-driven experimentation.
