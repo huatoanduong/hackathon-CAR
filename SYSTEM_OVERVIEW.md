@@ -56,13 +56,19 @@ MapView renders polyline + stop markers
 RouteDetailPanel renders stop list + times
 ```
 
-### 2. EV Station Data Flow
+### 2. EV Data Flows
 ```
 scripts/fetch_ev_stations.py
-        ↓  (Google My Maps scrape)
-data/ev_stations.json  (raw)
+        ↓  (Google My Maps KML scrape)
+data/ev-stations.raw.json  (raw station locations)
         ↓  (preprocessing, if needed)
-Backend loads at startup
+Backend loads at startup → serves GET /stations
+
+scripts/fetch_ev_cars.py
+        ↓  (multi-brand EV model scrape)
+data/ev-cars.raw.json  (vehicle specs: range, battery, charge rate)
+        ↓
+Backend loads at startup → serves GET /vehicles
 ```
 
 ---
