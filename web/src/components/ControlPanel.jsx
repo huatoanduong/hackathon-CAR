@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './ControlPanel.css';
 
 export default function ControlPanel({
@@ -10,14 +11,26 @@ export default function ControlPanel({
   onChargeThresholdChange,
   start,
   destination,
+  startLabel,
+  destinationLabel,
+  placeResults,
+  placeSearchLoading,
   placingMode,
   onPlacingModeChange,
+  onDestinationSearch,
+  onSelectDestination,
+  onUseCurrentLocation,
   onPlanRoute,
   onReset,
   loading,
   error,
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
   const canPlan = start && destination && selectedVehicle && !loading;
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    onDestinationSearch(searchQuery);
+  };
 
   return (
     <aside className="control-panel">
@@ -29,15 +42,15 @@ export default function ControlPanel({
 
         <div className="control-panel__location">
           <label>Start</label>
-          {start ? (
-            <span className="control-panel__coord">
-              {start.lat.toFixed(4)}, {start.lng.toFixed(4)}
+          <div className="control-panel__location-body">
+            <span className={start ? 'control-panel__coord' : 'control-panel__coord control-panel__coord--empty'}>
+              {start ? `${start.lat.toFixed(4)}, ${start.lng.toFixed(4)}` : 'Not set'}
             </span>
-          ) : (
-            <span className="control-panel__coord control-panel__coord--empty">
-              Not set
-            </span>
-          )}
+            {startLabel && <span className="control-panel__place-name">{startLabel}</span>}
+          </div>
+          <button className="control-panel__icon-btn" onClick={onUseCurrentLocation} title="Use current location">
+            ◎
+          </button>
           <button
             className={`control-panel__pin-btn ${placingMode === 'start' ? 'control-panel__pin-btn--active' : ''}`}
             onClick={() =>
@@ -48,17 +61,49 @@ export default function ControlPanel({
           </button>
         </div>
 
-        <div className="control-panel__location">
-          <label>Destination</label>
-          {destination ? (
-            <span className="control-panel__coord">
-              {destination.lat.toFixed(4)}, {destination.lng.toFixed(4)}
-            </span>
-          ) : (
-            <span className="control-panel__coord control-panel__coord--empty">
-              Not set
-            </span>
+        <form className="control-panel__search" onSubmit={handleSearchSubmit}>
+          <label htmlFor="destination-search">Destination</label>
+          <div className="control-panel__search-box">
+            <input
+              id="destination-search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search a place in Vietnam"
+            />
+            <button type="submit" disabled={placeSearchLoading || searchQuery.trim().length < 2}>
+              {placeSearchLoading ? '...' : 'Search'}
+            </button>
+          </div>
+          {placeResults.length > 0 && (
+            <div className="control-panel__results">
+              {placeResults.map((place) => (
+                <button
+                  key={place.id}
+                  type="button"
+                  className="control-panel__result"
+                  onClick={() => {
+                    setSearchQuery(place.name);
+                    onSelectDestination(place);
+                  }}
+                >
+                  <strong>{place.name}</strong>
+                  <span>{place.address}</span>
+                </button>
+              ))}
+            </div>
           )}
+        </form>
+
+        <div className="control-panel__location">
+          <label>Target</label>
+          <div className="control-panel__location-body">
+            <span className={destination ? 'control-panel__coord' : 'control-panel__coord control-panel__coord--empty'}>
+              {destination
+                ? `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`
+                : 'Not set'}
+            </span>
+            {destinationLabel && <span className="control-panel__place-name">{destinationLabel}</span>}
+          </div>
           <button
             className={`control-panel__pin-btn ${placingMode === 'destination' ? 'control-panel__pin-btn--active' : ''}`}
             onClick={() =>

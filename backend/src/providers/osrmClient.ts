@@ -44,6 +44,10 @@ export function parseOsrmRoute(payload: unknown): RoutingRoute {
       distance?: number;
       duration?: number;
       geometry?: RouteGeometry;
+      legs?: Array<{
+        distance?: number;
+        duration?: number;
+      }>;
     }>;
   };
   const route = data.routes?.[0];
@@ -63,6 +67,10 @@ export function parseOsrmRoute(payload: unknown): RoutingRoute {
   return {
     distanceKm: metersToKm(route.distance),
     durationSeconds: route.duration,
-    geometry: route.geometry
+    geometry: route.geometry,
+    legs: route.legs?.map((leg) => ({
+      distanceKm: metersToKm(Number(leg.distance ?? 0)),
+      durationSeconds: Number(leg.duration ?? 0)
+    }))
   };
 }

@@ -67,6 +67,13 @@ export class RoutePlannerService {
       chargingStops.push({
         stationId: candidate.station.id,
         name: candidate.station.name,
+        address: candidate.station.address,
+        status: candidate.station.status,
+        accessInfo: candidate.station.accessInfo,
+        connectorSummary: candidate.station.connectorSummary,
+        connectorCount: candidate.station.connectorCount,
+        maxPowerKw: candidate.station.maxPowerKw,
+        powerLevelsKw: candidate.station.powerLevelsKw,
         lat: candidate.station.lat,
         lng: candidate.station.lng,
         batteryBeforeChargingPercent: clampBatteryPercent(candidate.batteryBeforeChargingPercent),
@@ -159,14 +166,16 @@ export class RoutePlannerService {
     let totalDurationSeconds = 0;
 
     for (let index = 0; index < waypoints.length - 1; index += 1) {
-      const route = await this.routingProvider.getRoute([waypoints[index], waypoints[index + 1]]);
-      const arrivalBattery = estimateArrivalBatteryPercent(battery, route.distanceKm, vehicleRangeKm);
-      totalDistanceKm += route.distanceKm;
-      totalDurationSeconds += route.durationSeconds;
+      const routeLeg = fullRoute.legs?.[index];
+      if (!routeLeg) throw new RoutePlanningError("Routing provider returned missing route leg data");
+      const distanceKm = routeLeg.distanceKm;
+      const arrivalBattery = estimateArrivalBatteryPercent(battery, distanceKm, vehicleRangeKm);
+      totalDistanceKm += distanceKm;
+      totalDurationSeconds += routeLeg.durationSeconds;
       legs.push({
         from: index === 0 ? "Start" : selectedStations[index - 1].name,
         to: index === selectedStations.length ? "Destination" : selectedStations[index].name,
-        distanceKm: Number(route.distanceKm.toFixed(1)),
+        distanceKm: Number(distanceKm.toFixed(1)),
         estimatedArrivalBatteryPercent: arrivalBattery
       });
       battery = index < selectedStations.length ? POST_CHARGE_BATTERY_PERCENT : arrivalBattery;

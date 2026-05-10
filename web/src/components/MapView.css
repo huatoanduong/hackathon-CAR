@@ -12,6 +12,111 @@
   width: 100%;
 }
 
+.charging-popup-shell .leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+.charging-popup-shell .leaflet-popup-content {
+  margin: 0;
+  width: 300px;
+}
+
+.charging-popup {
+  background: #ffffff;
+  color: #0f172a;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.charging-popup__header {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px 12px;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #ffffff;
+}
+
+.charging-popup__eyebrow {
+  width: max-content;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.charging-popup__title {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.charging-popup__status {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+}
+
+.charging-popup__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.charging-popup__metrics div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.charging-popup__metrics div:last-child {
+  border-right: 0;
+}
+
+.charging-popup__metrics span,
+.charging-popup__grid span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.charging-popup__metrics strong {
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.charging-popup__grid {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 8px 12px;
+  padding: 12px 16px;
+}
+
+.charging-popup__grid strong {
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.charging-popup__address,
+.charging-popup__reason {
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.charging-popup__reason {
+  background: #f8fafc;
+  color: #334155;
+  font-style: italic;
+}
+
 .map-container__mode-hint {
   position: absolute;
   top: 12px;

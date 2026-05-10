@@ -15,6 +15,13 @@ export const PlanRouteResponseSchema = z.object({
     z.object({
       stationId: z.string(),
       name: z.string(),
+      address: z.string().nullable().optional(),
+      status: z.string().nullable().optional(),
+      accessInfo: z.string().nullable().optional(),
+      connectorSummary: z.string().nullable().optional(),
+      connectorCount: z.number().nullable().optional(),
+      maxPowerKw: z.number().nullable().optional(),
+      powerLevelsKw: z.array(z.number()).optional(),
       lat: z.number(),
       lng: z.number(),
       batteryBeforeChargingPercent: z.number(),

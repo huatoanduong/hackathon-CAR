@@ -15,6 +15,11 @@ export type ChargingStation = {
   providerStationId: string;
   name: string;
   address: string | null;
+  accessInfo?: string | null;
+  connectorSummary?: string | null;
+  connectorCount?: number | null;
+  maxPowerKw?: number | null;
+  powerLevelsKw?: number[];
   lat: number;
   lng: number;
   status: string | null;
@@ -31,6 +36,10 @@ export type RoutingRoute = {
   distanceKm: number;
   durationSeconds: number;
   geometry: RouteGeometry;
+  legs?: Array<{
+    distanceKm: number;
+    durationSeconds: number;
+  }>;
 };
 
 export type RouteLeg = {
@@ -43,6 +52,13 @@ export type RouteLeg = {
 export type ChargingStop = {
   stationId: string;
   name: string;
+  address?: string | null;
+  status?: string | null;
+  accessInfo?: string | null;
+  connectorSummary?: string | null;
+  connectorCount?: number | null;
+  maxPowerKw?: number | null;
+  powerLevelsKw?: number[];
   lat: number;
   lng: number;
   batteryBeforeChargingPercent: number;
