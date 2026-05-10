@@ -10,3 +10,19 @@
   flex-direction: column;
   position: relative;
 }
+
+@media (max-width: 720px) {
+  .app {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .app__main {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 40vh;
+    left: 0;
+  }
+}

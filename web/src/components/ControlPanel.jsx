@@ -27,6 +27,8 @@ export default function ControlPanel({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const canPlan = start && destination && selectedVehicle && !loading;
+  const selectedVehicleDetails = vehicles.find((v) => v.id === selectedVehicle);
+
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     onDestinationSearch(searchQuery);
@@ -34,10 +36,16 @@ export default function ControlPanel({
 
   return (
     <aside className="control-panel">
-      <h1 className="control-panel__title">EV Route Planner</h1>
+      <div className="control-panel__sheet-handle" aria-hidden="true" />
+      <div className="control-panel__topbar">
+        <h1 className="control-panel__title">T Map - EV Route Planner</h1>
+        <span className="control-panel__more-btn" aria-hidden="true">
+          ...
+        </span>
+      </div>
 
       {/* Location pickers */}
-      <section className="control-panel__section">
+      <section className="control-panel__section control-panel__section--locations">
         <h2 className="control-panel__heading">Locations</h2>
 
         <div className="control-panel__location">
@@ -118,7 +126,7 @@ export default function ControlPanel({
       </section>
 
       {/* Vehicle selector */}
-      <section className="control-panel__section">
+      <section className="control-panel__section control-panel__section--advanced">
         <h2 className="control-panel__heading">Vehicle</h2>
         <select
           className="control-panel__select"
@@ -135,7 +143,7 @@ export default function ControlPanel({
       </section>
 
       {/* Battery inputs */}
-      <section className="control-panel__section">
+      <section className="control-panel__section control-panel__section--advanced">
         <h2 className="control-panel__heading">Battery</h2>
 
         <label className="control-panel__label">
@@ -165,6 +173,12 @@ export default function ControlPanel({
 
       {/* Actions */}
       <section className="control-panel__section">
+        {selectedVehicleDetails && (
+          <div className="control-panel__compact-meta">
+            <span>{selectedVehicleDetails.name}</span>
+            <strong>{battery}% battery</strong>
+          </div>
+        )}
         <button
           className="control-panel__plan-btn"
           disabled={!canPlan}

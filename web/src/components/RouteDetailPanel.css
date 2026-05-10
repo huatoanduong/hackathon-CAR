@@ -119,3 +119,9 @@
   font-size: 11px;
   color: #92400e;
 }
+
+@media (max-width: 720px) {
+  .route-detail {
+    display: none;
+  }
+}

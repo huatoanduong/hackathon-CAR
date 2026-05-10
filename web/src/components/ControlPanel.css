@@ -11,6 +11,17 @@
   gap: 8px;
 }
 
+.control-panel__sheet-handle,
+.control-panel__more-btn {
+  display: none;
+}
+
+.control-panel__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .control-panel__title {
   font-size: 20px;
   font-weight: 700;
@@ -274,4 +285,155 @@
   border-radius: 8px;
   font-size: 13px;
   color: #b91c1c;
+}
+
+.control-panel__compact-meta {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .control-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    width: auto;
+    min-width: 0;
+    height: 40vh;
+    padding: 6px 14px max(10px, env(safe-area-inset-bottom));
+    gap: 5px;
+    border: 0;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 16px 44px rgba(15, 23, 42, 0.22);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .control-panel__sheet-handle {
+    display: none;
+  }
+
+  .control-panel__topbar {
+    min-height: 24px;
+  }
+
+  .control-panel__more-btn {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+
+  .control-panel__title {
+    margin-bottom: 0;
+    font-size: 15px;
+  }
+
+  .control-panel__section {
+    gap: 5px;
+    padding-bottom: 7px;
+  }
+
+  .control-panel__heading {
+    font-size: 11px;
+  }
+
+  .control-panel__location {
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .control-panel__location label {
+    width: 48px;
+    padding-top: 4px;
+    font-size: 12px;
+  }
+
+  .control-panel__coord,
+  .control-panel__place-name {
+    font-size: 11px;
+  }
+
+  .control-panel__pin-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .control-panel__icon-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .control-panel__search {
+    gap: 4px;
+  }
+
+  .control-panel__search label {
+    font-size: 12px;
+  }
+
+  .control-panel__search-box input {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .control-panel__search-box button {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .control-panel__results {
+    max-height: 112px;
+    overflow-y: auto;
+  }
+
+  .control-panel__result {
+    padding: 7px 10px;
+  }
+
+  .control-panel__select {
+    padding: 6px 9px;
+    font-size: 13px;
+  }
+
+  .control-panel__label {
+    font-size: 12px;
+  }
+
+  .control-panel__plan-btn {
+    padding: 9px;
+    font-size: 14px;
+  }
+
+  .control-panel__compact-meta {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #475569;
+    font-size: 12px;
+  }
+
+  .control-panel__compact-meta span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .control-panel__compact-meta strong {
+    flex-shrink: 0;
+    color: #16a34a;
+  }
+
+  .control-panel__reset-btn {
+    padding: 7px;
+  }
 }

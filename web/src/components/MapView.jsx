@@ -77,6 +77,21 @@ function FitBounds({ start, destination, routePositions }) {
   return null;
 }
 
+function ResizeObserverBridge() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [map]);
+
+  return null;
+}
+
 function ChargingStopPopup({ stop, index }) {
   const powerLevels = stop.powerLevelsKw?.length
     ? stop.powerLevelsKw.map((level) => `${level}kW`).join(', ')
@@ -187,6 +202,7 @@ export default function MapView({
         />
 
         <ClickHandler placingMode={placingMode} onMapClick={onMapClick} />
+        <ResizeObserverBridge />
         <FitBounds
           start={start}
           destination={destination}
