@@ -1,11 +1,23 @@
 import './RouteDetailPanel.css';
 
-export default function RouteDetailPanel({ legs, chargingStops }) {
+export default function RouteDetailPanel({ legs, chargingStops, googleMapsUrl }) {
   if (!legs || legs.length === 0) return null;
 
   return (
     <div className="route-detail">
-      <h2 className="route-detail__title">Route Details</h2>
+      <div className="route-detail__header">
+        <h2 className="route-detail__title">Route Details</h2>
+        {googleMapsUrl && (
+          <a
+            className="route-detail__google-btn"
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Google Maps
+          </a>
+        )}
+      </div>
 
       <div className="route-detail__legs">
         {legs.map((leg, idx) => {

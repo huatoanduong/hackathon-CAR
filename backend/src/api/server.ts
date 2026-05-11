@@ -3,16 +3,22 @@ import { JsonStationRepository } from "../demo/jsonStationRepository.js";
 import { JsonVehicleRepository } from "../demo/jsonVehicleRepository.js";
 import { RoutePlannerService } from "../domain/routePlanner.js";
 import { OsrmClient } from "../providers/osrmClient.js";
+import { VietmapRoutingClient } from "../providers/vietmapRoutingClient.js";
 import { logger } from "../utils/logger.js";
 import { buildApp } from "./app.js";
 
 async function main(): Promise<void> {
   const storage = await buildStorage();
-  const routingProvider = new OsrmClient(env.ROUTING_BASE_URL, env.ROUTING_TIMEOUT_MS);
+  const routingProviders = {
+    osrm: new OsrmClient(env.ROUTING_BASE_URL, env.ROUTING_TIMEOUT_MS),
+    vietmap: env.VIETMAP_SERVICE_API_KEY
+      ? new VietmapRoutingClient(env.VIETMAP_ROUTING_BASE_URL, env.VIETMAP_SERVICE_API_KEY, env.ROUTING_TIMEOUT_MS)
+      : new OsrmClient(env.ROUTING_BASE_URL, env.ROUTING_TIMEOUT_MS)
+  };
   const routePlanner = new RoutePlannerService(
     storage.vehicleRepository,
     storage.stationRepository,
-    routingProvider,
+    routingProviders,
     env.ROUTE_CORRIDOR_RADIUS_KM
   );
 

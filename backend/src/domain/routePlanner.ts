@@ -9,20 +9,23 @@ import { selectBestStation } from "./stationSelection.js";
 import type { ChargingStation, Coordinate, PlanRouteInput, PlanRouteResult } from "./types.js";
 
 const DESTINATION_MIN_BATTERY_PERCENT = 20;
+const EMERGENCY_MIN_CHARGER_ARRIVAL_PERCENT = 0;
 const POST_CHARGE_BATTERY_PERCENT = 80;
 const MAX_PLANNING_ITERATIONS = 8;
+type RoutingProviderName = NonNullable<PlanRouteInput["routingProvider"]>;
 
 export class RoutePlannerService {
   constructor(
     private readonly vehicleRepository: Pick<VehicleRepository, "findVehicleById">,
     private readonly stationRepository: Pick<StationRepository, "findStationsNearRoutePoints">,
-    private readonly routingProvider: RoutingProvider,
+    private readonly routingProviders: RoutingProvider | Record<RoutingProviderName, RoutingProvider>,
     private readonly routeCorridorRadiusKm = 3
   ) {}
 
   async planRoute(input: PlanRouteInput): Promise<PlanRouteResult> {
     const vehicle = await this.vehicleRepository.findVehicleById(input.vehicleModelId);
     if (!vehicle) throw new NotFoundError(`Vehicle not found: ${input.vehicleModelId}`);
+    const routingProvider = this.getRoutingProvider(input.routingProvider);
 
     const selectedStations: ChargingStation[] = [];
     const chargingStops: PlanRouteResult["chargingStops"] = [];
@@ -31,7 +34,7 @@ export class RoutePlannerService {
     let currentBatteryPercent = input.currentBatteryPercent;
 
     for (let iteration = 0; iteration < MAX_PLANNING_ITERATIONS; iteration += 1) {
-      const directRoute = await this.routingProvider.getRoute([currentPoint, input.destination]);
+      const directRoute = await routingProvider.getRoute([currentPoint, input.destination]);
       const destinationBattery = estimateArrivalBatteryPercent(
         currentBatteryPercent,
         directRoute.distanceKm,
@@ -45,7 +48,8 @@ export class RoutePlannerService {
           chargingStops,
           vehicleRangeKm: vehicle.officialRangeKm,
           initialBatteryPercent: input.currentBatteryPercent,
-          warnings
+          warnings,
+          routingProvider
         });
       }
 
@@ -56,7 +60,9 @@ export class RoutePlannerService {
         currentBatteryPercent,
         officialRangeKm: vehicle.officialRangeKm,
         thresholdPercent: input.chargeThresholdPercent,
-        excludeStationIds: selectedStations.map((station) => station.id)
+        excludeStationIds: selectedStations.map((station) => station.id),
+        routingProvider,
+        allowEmergencyLowBattery: selectedStations.length === 0
       });
 
       if (!candidate) {
@@ -78,11 +84,16 @@ export class RoutePlannerService {
         lng: candidate.station.lng,
         batteryBeforeChargingPercent: clampBatteryPercent(candidate.batteryBeforeChargingPercent),
         batteryAfterChargingPercent: POST_CHARGE_BATTERY_PERCENT,
-        selectionReason: candidate.selectedEarlierThanThreshold
-          ? "Selected earlier because no better charger was available later in the safe window."
-          : "Lowest detour time within the safe battery window."
+        selectionReason: candidate.emergencyLowBattery
+            ? "Emergency stop selected because the starting battery is below the normal safety reserve."
+            : candidate.selectedEarlierThanThreshold
+              ? "Selected earlier because no better charger was available later in the safe window."
+              : "Lowest detour time within the safe battery window."
       });
-      if (candidate.selectedEarlierThanThreshold) {
+      if (candidate.emergencyLowBattery) {
+        warnings.push("Starting battery is below the normal 20% safety reserve, so the first charging stop may arrive under 20%.");
+      }
+      if (candidate.selectedEarlierThanThreshold && !candidate.emergencyLowBattery) {
         warnings.push(`Charging stop ${candidate.station.name} was selected earlier than the preferred threshold.`);
       }
       currentPoint = { lat: candidate.station.lat, lng: candidate.station.lng };
@@ -99,7 +110,9 @@ export class RoutePlannerService {
     currentBatteryPercent,
     officialRangeKm,
     thresholdPercent,
-    excludeStationIds
+    excludeStationIds,
+    routingProvider,
+    allowEmergencyLowBattery
   }: {
     directRoute: Awaited<ReturnType<RoutingProvider["getRoute"]>>;
     currentPoint: Coordinate;
@@ -108,8 +121,14 @@ export class RoutePlannerService {
     officialRangeKm: number;
     thresholdPercent: number;
     excludeStationIds: string[];
+    routingProvider: RoutingProvider;
+    allowEmergencyLowBattery: boolean;
   }) {
-    const windows = buildSearchWindows(currentBatteryPercent, thresholdPercent);
+    const emergencyLowBattery = allowEmergencyLowBattery && currentBatteryPercent < DESTINATION_MIN_BATTERY_PERCENT;
+    const minArrivalBatteryPercent = emergencyLowBattery ? EMERGENCY_MIN_CHARGER_ARRIVAL_PERCENT : DESTINATION_MIN_BATTERY_PERCENT;
+    const windows = buildSearchWindows(currentBatteryPercent, thresholdPercent, {
+      emergencyMinBatteryPercent: emergencyLowBattery ? minArrivalBatteryPercent : undefined
+    });
     for (const window of windows) {
       const windowStartKm = distanceReachableKm(currentBatteryPercent, window.maxBatteryPercent, officialRangeKm);
       const windowEndKm = distanceReachableKm(currentBatteryPercent, window.minBatteryPercent, officialRangeKm);
@@ -130,9 +149,10 @@ export class RoutePlannerService {
         officialRangeKm,
         thresholdPercent,
         window,
-        routingProvider: this.routingProvider
+        routingProvider,
+        minArrivalBatteryPercent
       });
-      if (candidate) return candidate;
+      if (candidate) return { ...candidate, emergencyLowBattery };
     }
     return null;
   }
@@ -144,7 +164,8 @@ export class RoutePlannerService {
     chargingStops,
     vehicleRangeKm,
     initialBatteryPercent,
-    warnings
+    warnings,
+    routingProvider
   }: {
     start: Coordinate;
     destination: Coordinate;
@@ -153,20 +174,26 @@ export class RoutePlannerService {
     vehicleRangeKm: number;
     initialBatteryPercent: number;
     warnings: string[];
+    routingProvider: RoutingProvider;
   }): Promise<PlanRouteResult> {
     const waypoints = [
       start,
       ...selectedStations.map((station) => ({ lat: station.lat, lng: station.lng })),
       destination
     ];
-    const fullRoute = await this.routingProvider.getRoute(waypoints);
+    const fullRoute = await routingProvider.getRoute(waypoints);
+    const routeLegs = fullRoute.legs ?? await Promise.all(
+      waypoints.slice(0, -1).map((point, index) =>
+        routingProvider.getRoute([point, waypoints[index + 1]])
+      )
+    );
     const legs: PlanRouteResult["legs"] = [];
     let battery = initialBatteryPercent;
     let totalDistanceKm = 0;
     let totalDurationSeconds = 0;
 
     for (let index = 0; index < waypoints.length - 1; index += 1) {
-      const routeLeg = fullRoute.legs?.[index];
+      const routeLeg = routeLegs[index];
       if (!routeLeg) throw new RoutePlanningError("Routing provider returned missing route leg data");
       const distanceKm = routeLeg.distanceKm;
       const arrivalBattery = estimateArrivalBatteryPercent(battery, distanceKm, vehicleRangeKm);
@@ -192,5 +219,12 @@ export class RoutePlannerService {
       },
       warnings
     };
+  }
+
+  private getRoutingProvider(name: RoutingProviderName = "osrm"): RoutingProvider {
+    if ("getRoute" in this.routingProviders) return this.routingProviders;
+    const provider = this.routingProviders[name] ?? this.routingProviders.osrm;
+    if (!provider) throw new RoutePlanningError(`Routing provider is not configured: ${name}`);
+    return provider;
   }
 }

@@ -2,7 +2,7 @@ import { RoutePlanningError } from "../api/errors.js";
 import type { ChargingStation, RouteCandidate, RouteGeometry, RoutingRoute, SearchWindow } from "./types.js";
 import type { Coordinate } from "./types.js";
 import type { RoutingProvider } from "../providers/routingProvider.js";
-import { estimateArrivalBatteryPercent } from "./battery.js";
+import { distanceReachableKm, estimateArrivalBatteryPercent } from "./battery.js";
 import { nearestProgressKm } from "./routeGeometry.js";
 
 const MAX_ROUTED_CANDIDATES = 6;
@@ -18,7 +18,8 @@ export async function selectBestStation({
   officialRangeKm,
   thresholdPercent,
   window,
-  routingProvider
+  routingProvider,
+  minArrivalBatteryPercent = 20
 }: {
   stations: ChargingStation[];
   routeGeometry: RouteGeometry;
@@ -30,6 +31,7 @@ export async function selectBestStation({
   thresholdPercent: number;
   window: SearchWindow;
   routingProvider: RoutingProvider;
+  minArrivalBatteryPercent?: number;
 }): Promise<RouteCandidate | null> {
   const candidates: RouteCandidate[] = [];
   const prefilteredStations = stations
@@ -57,7 +59,16 @@ export async function selectBestStation({
         toStation.distanceKm,
         officialRangeKm
       );
-      if (batteryBeforeChargingPercent < 20 || batteryBeforeChargingPercent > currentBatteryPercent) return;
+      const maxReachableDistanceKm = distanceReachableKm(
+        currentBatteryPercent,
+        minArrivalBatteryPercent,
+        officialRangeKm
+      );
+      if (toStation.distanceKm > maxReachableDistanceKm + 0.1) return;
+      if (
+        batteryBeforeChargingPercent < minArrivalBatteryPercent ||
+        batteryBeforeChargingPercent > currentBatteryPercent
+      ) return;
 
       const detourDurationSeconds =
         toStation.durationSeconds + stationToDestination.durationSeconds - directRoute.durationSeconds;

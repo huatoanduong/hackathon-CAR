@@ -35,6 +35,26 @@ describe("RoutePlannerService", () => {
     expect(result.legs).toHaveLength(2);
   });
 
+  it("allows an emergency first stop when starting battery is below the safety reserve", async () => {
+    const station = stationAt("emergency", { lat: 0.1, lng: 0 });
+    const provider = routeProvider([
+      { distanceKm: 400, durationSeconds: 4000, geometry: line(start, dest) },
+      { distanceKm: 20, durationSeconds: 600, geometry: line(start, station) },
+      { distanceKm: 280, durationSeconds: 3000, geometry: line(station, dest) },
+      { distanceKm: 280, durationSeconds: 3000, geometry: line(station, dest) },
+      { distanceKm: 300, durationSeconds: 3600, geometry: line(start, station, dest) },
+      { distanceKm: 20, durationSeconds: 600, geometry: line(start, station) },
+      { distanceKm: 280, durationSeconds: 3000, geometry: line(station, dest) }
+    ]);
+    const planner = new RoutePlannerService(vehicleRepo(500), stationRepo([station]), provider);
+
+    const result = await planner.planRoute(baseInput({ currentBatteryPercent: 10 }));
+    expect(result.chargingStops[0].stationId).toBe("emergency");
+    expect(result.chargingStops[0].batteryBeforeChargingPercent).toBe(6);
+    expect(result.chargingStops[0].selectionReason).toContain("Emergency stop");
+    expect(result.warnings[0]).toContain("below the normal 20% safety reserve");
+  });
+
   it("fails when no reachable station exists", async () => {
     const planner = new RoutePlannerService(
       vehicleRepo(500),

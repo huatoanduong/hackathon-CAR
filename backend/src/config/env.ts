@@ -11,6 +11,8 @@ const EnvSchema = z.object({
   HOST: z.string().default("0.0.0.0"),
   ROUTING_BASE_URL: z.string().url().default("http://router.project-osrm.org"),
   ROUTING_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  VIETMAP_SERVICE_API_KEY: z.string().min(1).optional(),
+  VIETMAP_ROUTING_BASE_URL: z.string().url().default("https://maps.vietmap.vn"),
   STATION_SEARCH_RADIUS_KM: z.coerce.number().positive().default(5),
   ROUTE_CORRIDOR_RADIUS_KM: z.coerce.number().positive().default(8),
   STATION_INGEST_CRON: z.string().default("0 */6 * * *"),

@@ -2,8 +2,22 @@ import type { SearchWindow } from "./types.js";
 
 export function buildSearchWindows(
   currentBatteryPercent: number,
-  chargeThresholdPercent: number
+  chargeThresholdPercent: number,
+  options: { emergencyMinBatteryPercent?: number } = {}
 ): SearchWindow[] {
+  if (
+    options.emergencyMinBatteryPercent !== undefined &&
+    currentBatteryPercent <= chargeThresholdPercent
+  ) {
+    return [
+      {
+        minBatteryPercent: Math.max(0, options.emergencyMinBatteryPercent),
+        maxBatteryPercent: currentBatteryPercent,
+        preferred: false
+      }
+    ].filter((window) => window.minBatteryPercent < currentBatteryPercent);
+  }
+
   const windows: SearchWindow[] = [
     {
       minBatteryPercent: 20,

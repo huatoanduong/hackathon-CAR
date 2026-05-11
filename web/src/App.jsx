@@ -1,11 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import MapView from './components/MapView';
 import ControlPanel from './components/ControlPanel';
 import RouteDetailPanel from './components/RouteDetailPanel';
-import { fetchVehicles, planRoute, searchPlaces } from './services/api';
+import {
+  buildGoogleMapsDirectionsUrl,
+  fetchVehicles,
+  planRoute,
+  searchPlaces,
+} from './services/api';
 import './App.css';
 
 const DEFAULT_CENTER = [10.7769, 106.7009]; // Ho Chi Minh City
+const HAS_VIETMAP_TILE_KEY = Boolean(
+  import.meta.env.VITE_VIETMAP_TILE_API_KEY || import.meta.env.VITE_VIETMAP_API_KEY,
+);
 
 export default function App() {
   const [vehicles, setVehicles] = useState([]);
@@ -20,8 +28,22 @@ export default function App() {
   const [placeSearchLoading, setPlaceSearchLoading] = useState(false);
   const [placingMode, setPlacingMode] = useState(null); // 'start' | 'destination' | null
   const [routeResult, setRouteResult] = useState(null);
+  const [mapProvider, setMapProvider] = useState(
+    HAS_VIETMAP_TILE_KEY ? 'vietmap' : 'osm',
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const googleMapsUrl = useMemo(
+    () =>
+      routeResult
+        ? buildGoogleMapsDirectionsUrl({
+            start,
+            destination,
+            chargingStops: routeResult.chargingStops,
+          })
+        : null,
+    [destination, routeResult, start],
+  );
 
   useEffect(() => {
     fetchVehicles()
@@ -60,7 +82,7 @@ export default function App() {
     setPlaceSearchLoading(true);
     setError(null);
     try {
-      const results = await searchPlaces(query);
+      const results = await searchPlaces(query, { focus: start });
       setPlaceResults(results);
     } catch (err) {
       setPlaceResults([]);
@@ -68,7 +90,7 @@ export default function App() {
     } finally {
       setPlaceSearchLoading(false);
     }
-  }, []);
+  }, [start]);
 
   const handleSelectDestination = useCallback((place) => {
     setDestination({ lat: place.lat, lng: place.lng });
@@ -138,6 +160,7 @@ export default function App() {
         vehicleModelId: selectedVehicle,
         currentBatteryPercent: battery,
         chargeThresholdPercent: chargeThreshold,
+        routingProvider: mapProvider === 'vietmap' ? 'vietmap' : 'osrm',
       });
       setRouteResult(result);
     } catch (err) {
@@ -145,7 +168,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [start, destination, selectedVehicle, battery, chargeThreshold]);
+  }, [start, destination, selectedVehicle, battery, chargeThreshold, mapProvider]);
 
   const handleReset = useCallback(() => {
     setStart(null);
@@ -181,6 +204,7 @@ export default function App() {
         onUseCurrentLocation={handleUseCurrentLocation}
         onPlanRoute={handlePlanRoute}
         onReset={handleReset}
+        googleMapsUrl={googleMapsUrl}
         loading={loading}
         error={error}
       />
@@ -192,6 +216,11 @@ export default function App() {
           chargingStops={routeResult?.chargingStops || []}
           routeGeometry={routeResult?.routeGeometry || null}
           placingMode={placingMode}
+          mapProvider={mapProvider}
+          onMapProviderChange={(provider) => {
+            setMapProvider(provider);
+            setRouteResult(null);
+          }}
           onMapClick={handleMapClick}
           onMarkerDrag={handleMarkerDrag}
         />
@@ -199,6 +228,7 @@ export default function App() {
           <RouteDetailPanel
             legs={routeResult.legs}
             chargingStops={routeResult.chargingStops}
+            googleMapsUrl={googleMapsUrl}
           />
         )}
       </div>

@@ -12,11 +12,36 @@
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.route-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .route-detail__title {
   font-size: 15px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: #1a1a1a;
+}
+
+.route-detail__google-btn {
+  flex-shrink: 0;
+  border: 1px solid #16a34a;
+  border-radius: 8px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.route-detail__google-btn:hover {
+  background: #15803d;
+  border-color: #15803d;
 }
 
 .route-detail__legs {

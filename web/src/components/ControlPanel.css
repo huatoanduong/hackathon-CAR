@@ -261,6 +261,25 @@
   cursor: not-allowed;
 }
 
+.control-panel__google-btn {
+  display: grid;
+  place-items: center;
+  padding: 11px 12px;
+  border: 1px solid #16a34a;
+  border-radius: 8px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.control-panel__google-btn:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
 .control-panel__reset-btn {
   padding: 8px;
   background: transparent;
@@ -298,16 +317,23 @@
     right: 0;
     bottom: 0;
     z-index: 1200;
-    width: auto;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
-    height: 40vh;
-    padding: 6px 14px max(10px, env(safe-area-inset-bottom));
-    gap: 5px;
+    height: var(--mobile-panel-height, 56dvh);
+    max-height: var(--mobile-panel-height, 56dvh);
+    padding:
+      8px max(12px, calc(env(safe-area-inset-right) + 12px))
+      max(12px, calc(env(safe-area-inset-bottom) + 12px))
+      max(12px, calc(env(safe-area-inset-left) + 12px));
+    gap: 4px;
     border: 0;
-    border-radius: 22px 22px 0 0;
+    border-radius: 16px 16px 0 0;
     box-shadow: 0 16px 44px rgba(15, 23, 42, 0.22);
     overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .control-panel__sheet-handle {
@@ -315,13 +341,13 @@
   }
 
   .control-panel__topbar {
-    min-height: 24px;
+    min-height: 26px;
   }
 
   .control-panel__more-btn {
     display: grid;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     place-items: center;
     border: 0;
     border-radius: 50%;
@@ -332,47 +358,61 @@
   }
 
   .control-panel__title {
+    overflow: hidden;
+    max-width: calc(100% - 44px);
     margin-bottom: 0;
-    font-size: 15px;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .control-panel__section {
-    gap: 5px;
-    padding-bottom: 7px;
+    gap: 4px;
+    padding-bottom: 6px;
   }
 
   .control-panel__heading {
     font-size: 11px;
+    line-height: 1.1;
   }
 
   .control-panel__location {
-    align-items: flex-start;
-    gap: 5px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
   }
 
   .control-panel__location label {
     width: 48px;
-    padding-top: 4px;
+    padding-top: 0;
     font-size: 12px;
   }
 
   .control-panel__coord,
   .control-panel__place-name {
-    font-size: 11px;
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   .control-panel__pin-btn {
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 7px;
+    font-size: 12px;
+    line-height: 1;
   }
 
   .control-panel__icon-btn {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
   }
 
   .control-panel__search {
-    gap: 4px;
+    gap: 5px;
   }
 
   .control-panel__search label {
@@ -380,17 +420,18 @@
   }
 
   .control-panel__search-box input {
-    padding: 8px 10px;
+    padding: 10px 10px;
     font-size: 13px;
   }
 
   .control-panel__search-box button {
+    min-width: 72px;
     padding: 0 10px;
     font-size: 12px;
   }
 
   .control-panel__results {
-    max-height: 112px;
+    max-height: 136px;
     overflow-y: auto;
   }
 
@@ -399,7 +440,9 @@
   }
 
   .control-panel__select {
-    padding: 6px 9px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 9px;
     font-size: 13px;
   }
 
@@ -408,7 +451,12 @@
   }
 
   .control-panel__plan-btn {
-    padding: 9px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .control-panel__google-btn {
+    padding: 10px;
     font-size: 14px;
   }
 
@@ -434,6 +482,6 @@
   }
 
   .control-panel__reset-btn {
-    padding: 7px;
+    padding: 8px;
   }
 }

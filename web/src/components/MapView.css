@@ -12,6 +12,96 @@
   width: 100%;
 }
 
+.map--vietmap {
+  position: absolute;
+  inset: 0;
+}
+
+.map-provider-toggle {
+  position: absolute;
+  top: 12px;
+  right: 56px;
+  z-index: 1001;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.map-provider-toggle button {
+  min-width: 72px;
+  border: 0;
+  border-right: 1px solid rgba(15, 23, 42, 0.1);
+  background: transparent;
+  color: #334155;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.map-provider-toggle button:last-child {
+  border-right: 0;
+}
+
+.map-provider-toggle button:hover:not(:disabled),
+.map-provider-toggle button.is-active {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.map-provider-toggle button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.map-container--vietmap .map-container__mode-hint {
+  top: 58px;
+}
+
+.map-container__provider-error {
+  position: absolute;
+  left: 50%;
+  top: 56px;
+  z-index: 1001;
+  transform: translateX(-50%);
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  box-shadow: 0 8px 24px rgba(127, 29, 29, 0.14);
+}
+
+.vietmap-marker {
+  position: relative;
+  width: 41px;
+  height: 41px;
+  pointer-events: auto;
+}
+
+.vietmap-marker__icon {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 25px;
+  height: 41px;
+  user-select: none;
+}
+
+.vietmap-marker__shadow {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 41px;
+  height: 41px;
+  user-select: none;
+}
+
 .charging-popup-shell .leaflet-popup-content-wrapper {
   border-radius: 8px;
   padding: 0;
@@ -28,6 +118,12 @@
   background: #ffffff;
   color: #0f172a;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.charging-popup--html {
+  width: 300px;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .charging-popup__header {
@@ -129,4 +225,35 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   font-size: 14px;
   pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .map-provider-toggle {
+    top: max(52px, calc(env(safe-area-inset-top) + 12px));
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 112px);
+  }
+
+  .map-provider-toggle button {
+    min-width: 82px;
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  .leaflet-top.leaflet-right,
+  .vietmapgl-ctrl-top-right {
+    top: max(52px, calc(env(safe-area-inset-top) + 12px));
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  .map-container__mode-hint,
+  .map-container--vietmap .map-container__mode-hint {
+    top: max(98px, calc(env(safe-area-inset-top) + 58px));
+    max-width: calc(100vw - 24px);
+    padding: 7px 12px;
+    font-size: 12px;
+    text-align: center;
+  }
 }

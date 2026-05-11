@@ -6,7 +6,8 @@ export const PlanRouteRequestSchema = z.object({
   destination: CoordinateSchema,
   vehicleModelId: z.string().min(1),
   currentBatteryPercent: PercentageSchema.refine((value) => value > 0, "Current battery must be greater than 0"),
-  chargeThresholdPercent: PercentageSchema.default(30)
+  chargeThresholdPercent: PercentageSchema.default(30),
+  routingProvider: z.enum(["osrm", "vietmap"]).default("osrm")
 });
 
 export const PlanRouteResponseSchema = z.object({

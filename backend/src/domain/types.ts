@@ -72,6 +72,7 @@ export type PlanRouteInput = {
   vehicleModelId: string;
   currentBatteryPercent: number;
   chargeThresholdPercent: number;
+  routingProvider?: "osrm" | "vietmap";
 };
 
 export type PlanRouteResult = {
@@ -98,4 +99,5 @@ export type RouteCandidate = {
   routeProgressKm: number;
   batteryBeforeChargingPercent: number;
   selectedEarlierThanThreshold: boolean;
+  emergencyLowBattery?: boolean;
 };

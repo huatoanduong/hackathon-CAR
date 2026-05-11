@@ -22,6 +22,7 @@ export default function ControlPanel({
   onUseCurrentLocation,
   onPlanRoute,
   onReset,
+  googleMapsUrl,
   loading,
   error,
 }) {
@@ -186,6 +187,16 @@ export default function ControlPanel({
         >
           {loading ? 'Planning…' : 'Plan Route'}
         </button>
+        {googleMapsUrl && (
+          <a
+            className="control-panel__google-btn"
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Google Maps
+          </a>
+        )}
         <button className="control-panel__reset-btn" onClick={onReset}>
           Reset
         </button>

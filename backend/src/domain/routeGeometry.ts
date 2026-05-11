@@ -54,14 +54,48 @@ export function sampleRoutePoints<T>(points: T[], maxCount: number): T[] {
 }
 
 export function nearestProgressKm(geometry: RouteGeometry, point: Coordinate): number {
+  const routePoints = cumulativeRoutePoints(geometry);
+  if (routePoints.length === 0) return 0;
+  if (routePoints.length === 1) return routePoints[0].progressKm;
+
   let bestDistance = Number.POSITIVE_INFINITY;
   let bestProgress = 0;
-  for (const routePoint of cumulativeRoutePoints(geometry)) {
-    const distance = haversineDistanceKm(routePoint, point);
+
+  for (let index = 1; index < routePoints.length; index += 1) {
+    const start = routePoints[index - 1];
+    const end = routePoints[index];
+    const segmentLengthKm = end.progressKm - start.progressKm;
+    if (segmentLengthKm <= 0) continue;
+
+    const projected = projectPointToSegment(point, start, end);
+    const progressKm = start.progressKm + segmentLengthKm * projected.t;
+    const distance = projected.distanceKm;
+
     if (distance < bestDistance) {
       bestDistance = distance;
-      bestProgress = routePoint.progressKm;
+      bestProgress = progressKm;
     }
   }
+
   return bestProgress;
+}
+
+function projectPointToSegment(point: Coordinate, start: Coordinate, end: Coordinate) {
+  const latScaleKm = 111.32;
+  const lngScaleKm = 111.32 * Math.cos((start.lat * Math.PI) / 180);
+  const px = (point.lng - start.lng) * lngScaleKm;
+  const py = (point.lat - start.lat) * latScaleKm;
+  const sx = 0;
+  const sy = 0;
+  const ex = (end.lng - start.lng) * lngScaleKm;
+  const ey = (end.lat - start.lat) * latScaleKm;
+  const dx = ex - sx;
+  const dy = ey - sy;
+  const lengthSquared = dx * dx + dy * dy;
+  const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * dx + py * dy) / lengthSquared));
+  const projectedX = sx + dx * t;
+  const projectedY = sy + dy * t;
+  const distanceKm = Math.hypot(px - projectedX, py - projectedY);
+
+  return { distanceKm, t };
 }
