@@ -1,6 +1,9 @@
 .map-container {
   flex: 1;
   position: relative;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .map-container--placing {
@@ -19,19 +22,19 @@
 
 .map-provider-toggle {
   position: absolute;
-  top: 12px;
-  right: 56px;
+  top: 14px;
+  left: min(484px, calc(100vw - 230px));
   z-index: 1001;
   display: flex;
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 8px;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
 }
 
 .map-provider-toggle button {
-  min-width: 72px;
+  min-width: 86px;
   border: 0;
   border-right: 1px solid rgba(15, 23, 42, 0.1);
   background: transparent;
@@ -49,7 +52,7 @@
 
 .map-provider-toggle button:hover:not(:disabled),
 .map-provider-toggle button.is-active {
-  background: #0f766e;
+  background: #1a73e8;
   color: #ffffff;
 }
 
@@ -100,6 +103,68 @@
   width: 41px;
   height: 41px;
   user-select: none;
+}
+
+.station-marker,
+.vietmap-station-marker {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34d399, #0ea5e9);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.station-marker span {
+  line-height: 1;
+}
+
+.station-popup-shell .leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+}
+
+.station-popup-shell .leaflet-popup-content {
+  margin: 0;
+}
+
+.station-popup {
+  display: grid;
+  gap: 5px;
+  min-width: 200px;
+  padding: 12px 14px;
+  color: #0f172a;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.station-popup strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.station-popup span {
+  width: max-content;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 7px;
+}
+
+.station-popup p,
+.station-popup small {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .charging-popup-shell .leaflet-popup-content-wrapper {

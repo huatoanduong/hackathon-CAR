@@ -1,15 +1,16 @@
 .route-detail {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 40%;
+  right: 18px;
+  bottom: 18px;
+  width: min(460px, calc(100vw - 520px));
+  max-height: 42%;
   overflow-y: auto;
   background: rgba(255, 255, 255, 0.97);
-  border-top: 1px solid #e0e0e0;
+  border: 1px solid #dadce0;
+  border-radius: 16px;
   padding: 16px 20px;
   z-index: 1000;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 18px rgba(60, 64, 67, 0.24);
 }
 
 .route-detail__header {

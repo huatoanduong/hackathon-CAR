@@ -24,6 +24,20 @@ export async function planRoute(params) {
   return res.json();
 }
 
+export async function fetchStationsNear(point, radiusKm = 100) {
+  if (!point) return [];
+
+  const params = new URLSearchParams({
+    lat: point.lat,
+    lng: point.lng,
+    radiusKm,
+  });
+  const res = await fetch(`${API_BASE}/stations?${params.toString()}`);
+
+  if (!res.ok) throw new Error('Failed to fetch charging stations');
+  return res.json();
+}
+
 export function buildGoogleMapsDirectionsUrl({ start, destination, chargingStops = [] }) {
   if (!start || !destination) return null;
 

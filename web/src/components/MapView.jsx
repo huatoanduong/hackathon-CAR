@@ -65,6 +65,14 @@ const chargingIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+const stationIcon = L.divIcon({
+  className: 'station-marker',
+  html: '<span>EV</span>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -14],
+});
+
 function ClickHandler({ placingMode, onMapClick }) {
   useMapEvents({
     click(e) {
@@ -284,9 +292,48 @@ function buildChargingPopupHtml(stop, index) {
   `;
 }
 
+function StationPopup({ station }) {
+  return (
+    <div className="station-popup">
+      <strong>{station.name || 'Charging station'}</strong>
+      {station.status && <span>{station.status}</span>}
+      {station.address && <p>{station.address}</p>}
+      {(station.maxPowerKw || station.connectorSummary) && (
+        <small>
+          {station.maxPowerKw ? `${station.maxPowerKw}kW` : ''}
+          {station.maxPowerKw && station.connectorSummary ? ' · ' : ''}
+          {station.connectorSummary || ''}
+        </small>
+      )}
+    </div>
+  );
+}
+
+function buildStationPopupHtml(station) {
+  return `
+    <div class="station-popup station-popup--html">
+      <strong>${escapeHtml(station.name || 'Charging station')}</strong>
+      ${station.status ? `<span>${escapeHtml(station.status)}</span>` : ''}
+      ${station.address ? `<p>${escapeHtml(station.address)}</p>` : ''}
+      ${
+        station.maxPowerKw || station.connectorSummary
+          ? `<small>${station.maxPowerKw ? `${escapeHtml(station.maxPowerKw)}kW` : ''}${
+              station.maxPowerKw && station.connectorSummary ? ' · ' : ''
+            }${station.connectorSummary ? escapeHtml(station.connectorSummary) : ''}</small>`
+          : ''
+      }
+    </div>
+  `;
+}
+
 function createMarkerElement(type) {
   const wrapper = document.createElement('div');
-  wrapper.className = 'vietmap-marker';
+  wrapper.className = type === 'station' ? 'vietmap-station-marker' : 'vietmap-marker';
+
+  if (type === 'station') {
+    wrapper.textContent = 'EV';
+    return wrapper;
+  }
 
   const shadow = document.createElement('img');
   shadow.className = 'vietmap-marker__shadow';
@@ -309,10 +356,12 @@ function VietmapView({
   start,
   destination,
   chargingStops,
+  stations,
   routeGeometry,
   placingMode,
   onMapClick,
   onMarkerDrag,
+  onMapProviderError,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -340,7 +389,10 @@ function VietmapView({
         mapRef.current = map;
       })
       .catch(() => {
-        if (!cancelled) setLoadError('Could not load Vietmap GL');
+        if (!cancelled) {
+          setLoadError('Could not load Vietmap GL');
+          onMapProviderError?.();
+        }
       });
 
     return () => {
@@ -409,6 +461,14 @@ function VietmapView({
       markersRef.current.push(marker);
     };
 
+    stations.forEach((station) => {
+      addMarker({
+        point: station,
+        type: 'station',
+        popupHtml: buildStationPopupHtml(station),
+      });
+    });
+
     addMarker({
       point: start,
       type: 'start',
@@ -435,7 +495,7 @@ function VietmapView({
         popupHtml: buildChargingPopupHtml(stop, idx),
       });
     });
-  }, [chargingStops, destination, onMarkerDrag, start]);
+  }, [chargingStops, destination, onMarkerDrag, start, stations]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -520,6 +580,7 @@ function LeafletMapView({
   start,
   destination,
   chargingStops,
+  stations,
   routeGeometry,
   placingMode,
   onMapClick,
@@ -544,6 +605,18 @@ function LeafletMapView({
         destination={destination}
         routePositions={routePositions}
       />
+
+      {stations.map((station) => (
+        <Marker
+          key={`station-${station.id || `${station.lat}-${station.lng}`}`}
+          position={[station.lat, station.lng]}
+          icon={stationIcon}
+        >
+          <Popup className="station-popup-shell" maxWidth={260}>
+            <StationPopup station={station} />
+          </Popup>
+        </Marker>
+      ))}
 
       {start && (
         <Marker
@@ -612,10 +685,12 @@ export default function MapView({
   start,
   destination,
   chargingStops,
+  stations = [],
   routeGeometry,
   placingMode,
   mapProvider,
   onMapProviderChange,
+  onMapProviderError,
   onMapClick,
   onMarkerDrag,
 }) {
@@ -625,10 +700,12 @@ export default function MapView({
     start,
     destination,
     chargingStops,
+    stations,
     routeGeometry,
     placingMode,
     onMapClick,
     onMarkerDrag,
+    onMapProviderError,
   };
 
   return (

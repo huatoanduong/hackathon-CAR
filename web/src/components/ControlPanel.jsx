@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './ControlPanel.css';
 
 export default function ControlPanel({
@@ -23,52 +23,163 @@ export default function ControlPanel({
   onPlanRoute,
   onReset,
   googleMapsUrl,
+  recentRoutes = [],
+  onSelectRecentRoute,
   loading,
   error,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const latestSearchRef = useRef(0);
+  const skipNextSearchRef = useRef(false);
   const canPlan = start && destination && selectedVehicle && !loading;
   const selectedVehicleDetails = vehicles.find((v) => v.id === selectedVehicle);
 
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-    onDestinationSearch(searchQuery);
+  useEffect(() => {
+    const query = searchQuery.trim();
+    const searchId = latestSearchRef.current + 1;
+    latestSearchRef.current = searchId;
+
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return undefined;
+    }
+
+    if (query.length < 2) return undefined;
+
+    const timer = window.setTimeout(() => {
+      if (latestSearchRef.current === searchId) {
+        onDestinationSearch(query);
+      }
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [onDestinationSearch, searchQuery]);
+
+  const selectPlace = (place) => {
+    skipNextSearchRef.current = true;
+    setSearchQuery(place.name);
+    onSelectDestination(place);
   };
+
+  const handleSearchSubmit = async (event) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (query.length < 2) return;
+
+    if (placeResults.length > 0) {
+      selectPlace(placeResults[0]);
+      return;
+    }
+
+    const results = await onDestinationSearch(query);
+    if (results?.length > 0) {
+      selectPlace(results[0]);
+    }
+  };
+
+  const renderPlaceResults = (className = '') => {
+    if (placeResults.length === 0) return null;
+
+    return (
+      <div className={`control-panel__results ${className}`.trim()}>
+        {placeResults.map((place) => (
+          <button
+            key={place.id}
+            type="button"
+            className="control-panel__result"
+            onClick={() => selectPlace(place)}
+          >
+            <strong>{place.name}</strong>
+            <span>{place.address}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const renderLocation = ({
+    type,
+    label,
+    point,
+    placeLabel,
+    showCurrentLocation = false,
+  }) => (
+    <div className="control-panel__location">
+      <label>{label}</label>
+      <div className="control-panel__location-body">
+        <span
+          className={
+            point
+              ? 'control-panel__coord'
+              : 'control-panel__coord control-panel__coord--empty'
+          }
+        >
+          {point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : 'Not set'}
+        </span>
+        {placeLabel && <span className="control-panel__place-name">{placeLabel}</span>}
+      </div>
+      <div className="control-panel__location-actions">
+        {showCurrentLocation ? (
+          <button
+            className="control-panel__icon-btn"
+            onClick={onUseCurrentLocation}
+            title="Use current location"
+            type="button"
+          >
+            ◎
+          </button>
+        ) : (
+          <span className="control-panel__action-spacer" aria-hidden="true" />
+        )}
+        <button
+          className={`control-panel__pin-btn ${
+            placingMode === type ? 'control-panel__pin-btn--active' : ''
+          }`}
+          onClick={() => onPlacingModeChange(placingMode === type ? null : type)}
+          type="button"
+        >
+          {placingMode === type ? 'Placing...' : 'Set on map'}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <aside className="control-panel">
       <div className="control-panel__sheet-handle" aria-hidden="true" />
       <div className="control-panel__topbar">
         <h1 className="control-panel__title">T Map - EV Route Planner</h1>
+        <span className="control-panel__status-pill">EV</span>
         <span className="control-panel__more-btn" aria-hidden="true">
           ...
         </span>
       </div>
 
-      {/* Location pickers */}
+      <form className="control-panel__hero-search" onSubmit={handleSearchSubmit}>
+        <span className="control-panel__hero-icon" aria-hidden="true">
+          ⌕
+        </span>
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search destination"
+        />
+        <button type="submit" disabled={searchQuery.trim().length < 2}>
+          {placeSearchLoading ? '...' : 'Go'}
+        </button>
+      </form>
+      {renderPlaceResults('control-panel__results--hero')}
+
       <section className="control-panel__section control-panel__section--locations">
         <h2 className="control-panel__heading">Locations</h2>
 
-        <div className="control-panel__location">
-          <label>Start</label>
-          <div className="control-panel__location-body">
-            <span className={start ? 'control-panel__coord' : 'control-panel__coord control-panel__coord--empty'}>
-              {start ? `${start.lat.toFixed(4)}, ${start.lng.toFixed(4)}` : 'Not set'}
-            </span>
-            {startLabel && <span className="control-panel__place-name">{startLabel}</span>}
-          </div>
-          <button className="control-panel__icon-btn" onClick={onUseCurrentLocation} title="Use current location">
-            ◎
-          </button>
-          <button
-            className={`control-panel__pin-btn ${placingMode === 'start' ? 'control-panel__pin-btn--active' : ''}`}
-            onClick={() =>
-              onPlacingModeChange(placingMode === 'start' ? null : 'start')
-            }
-          >
-            {placingMode === 'start' ? 'Placing…' : 'Set on map'}
-          </button>
-        </div>
+        {renderLocation({
+          type: 'start',
+          label: 'Start',
+          point: start,
+          placeLabel: startLabel,
+          showCurrentLocation: true,
+        })}
 
         <form className="control-panel__search" onSubmit={handleSearchSubmit}>
           <label htmlFor="destination-search">Destination</label>
@@ -79,54 +190,53 @@ export default function ControlPanel({
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search a place in Vietnam"
             />
-            <button type="submit" disabled={placeSearchLoading || searchQuery.trim().length < 2}>
+            <button type="submit" disabled={searchQuery.trim().length < 2}>
               {placeSearchLoading ? '...' : 'Search'}
             </button>
           </div>
-          {placeResults.length > 0 && (
-            <div className="control-panel__results">
-              {placeResults.map((place) => (
-                <button
-                  key={place.id}
-                  type="button"
-                  className="control-panel__result"
-                  onClick={() => {
-                    setSearchQuery(place.name);
-                    onSelectDestination(place);
-                  }}
-                >
-                  <strong>{place.name}</strong>
-                  <span>{place.address}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {renderPlaceResults()}
         </form>
 
-        <div className="control-panel__location">
-          <label>Target</label>
-          <div className="control-panel__location-body">
-            <span className={destination ? 'control-panel__coord' : 'control-panel__coord control-panel__coord--empty'}>
-              {destination
-                ? `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`
-                : 'Not set'}
-            </span>
-            {destinationLabel && <span className="control-panel__place-name">{destinationLabel}</span>}
-          </div>
-          <button
-            className={`control-panel__pin-btn ${placingMode === 'destination' ? 'control-panel__pin-btn--active' : ''}`}
-            onClick={() =>
-              onPlacingModeChange(
-                placingMode === 'destination' ? null : 'destination',
-              )
-            }
-          >
-            {placingMode === 'destination' ? 'Placing…' : 'Set on map'}
-          </button>
-        </div>
+        {renderLocation({
+          type: 'destination',
+          label: 'Target',
+          point: destination,
+          placeLabel: destinationLabel,
+        })}
       </section>
 
-      {/* Vehicle selector */}
+      {recentRoutes.length > 0 && (
+        <section className="control-panel__section control-panel__section--recent">
+          <div className="control-panel__section-title-row">
+            <h2 className="control-panel__heading">Recent</h2>
+            <span>{recentRoutes.length} saved</span>
+          </div>
+          <div className="control-panel__recent-list">
+            {recentRoutes.map((route) => (
+              <button
+                key={route.id}
+                type="button"
+                className="control-panel__recent-route"
+                onClick={() => onSelectRecentRoute?.(route)}
+              >
+                <span className="control-panel__recent-icon" aria-hidden="true">
+                  ↗
+                </span>
+                <span className="control-panel__recent-body">
+                  <strong>{route.destinationLabel || route.title}</strong>
+                  <span>
+                    {route.startLabel || 'Start'} ·{' '}
+                    {Number.isFinite(route.distanceKm)
+                      ? `${Math.round(route.distanceKm)} km`
+                      : 'Recent route'} · {route.chargingStopCount || 0} stops
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="control-panel__section control-panel__section--advanced">
         <h2 className="control-panel__heading">Vehicle</h2>
         <select
@@ -134,7 +244,7 @@ export default function ControlPanel({
           value={selectedVehicle}
           onChange={(e) => onVehicleChange(e.target.value)}
         >
-          {vehicles.length === 0 && <option value="">Loading…</option>}
+          {vehicles.length === 0 && <option value="">Loading...</option>}
           {vehicles.map((v) => (
             <option key={v.id} value={v.id}>
               {v.name} ({v.officialRangeKm} km)
@@ -143,7 +253,6 @@ export default function ControlPanel({
         </select>
       </section>
 
-      {/* Battery inputs */}
       <section className="control-panel__section control-panel__section--advanced">
         <h2 className="control-panel__heading">Battery</h2>
 
@@ -172,7 +281,6 @@ export default function ControlPanel({
         />
       </section>
 
-      {/* Actions */}
       <section className="control-panel__section">
         {selectedVehicleDetails && (
           <div className="control-panel__compact-meta">
@@ -185,7 +293,7 @@ export default function ControlPanel({
           disabled={!canPlan}
           onClick={onPlanRoute}
         >
-          {loading ? 'Planning…' : 'Plan Route'}
+          {loading ? 'Planning...' : 'Plan Route'}
         </button>
         {googleMapsUrl && (
           <a
@@ -202,7 +310,6 @@ export default function ControlPanel({
         </button>
       </section>
 
-      {/* Error display */}
       {error && (
         <div className="control-panel__error">
           <strong>Error:</strong> {error}
