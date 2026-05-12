@@ -126,6 +126,18 @@
   grid-template-columns: 56px minmax(0, 1fr) 180px;
   align-items: center;
   gap: 8px;
+  min-height: 48px;
+  border-radius: 16px;
+  padding: 7px 8px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.control-panel__location--start {
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(240, 253, 250, 0.8));
+}
+
+.control-panel__location--destination {
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.96), rgba(255, 247, 237, 0.82));
 }
 
 .control-panel__location label {
@@ -135,11 +147,35 @@
   color: #3c4043;
 }
 
+.control-panel__location--start label {
+  color: #047857;
+}
+
+.control-panel__location--destination label {
+  color: #dc2626;
+}
+
 .control-panel__location-body {
   flex: 1;
   min-width: 0;
   display: grid;
   gap: 2px;
+}
+
+.control-panel__place-primary {
+  overflow: hidden;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.control-panel__place-primary--empty {
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 600;
 }
 
 .control-panel__coord {
@@ -218,6 +254,64 @@
   color: #fff;
   border-color: transparent;
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+.control-panel__location--start .control-panel__pin-btn {
+  border-color: rgba(16, 185, 129, 0.24);
+  color: #047857;
+}
+
+.control-panel__location--start .control-panel__pin-btn:hover,
+.control-panel__location--start .control-panel__pin-btn--active {
+  background: linear-gradient(135deg, #10b981, #22c55e);
+  color: #ffffff;
+}
+
+.control-panel__location--destination .control-panel__pin-btn {
+  border-color: rgba(239, 68, 68, 0.24);
+  color: #dc2626;
+}
+
+.control-panel__location--destination .control-panel__pin-btn:hover,
+.control-panel__location--destination .control-panel__pin-btn--active {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #ffffff;
+}
+
+.control-panel__station-toggle {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #334155;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 14px 4px 5px;
+  text-align: left;
+}
+
+.control-panel__station-toggle span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dcfce7, #e0f2fe);
+  color: #047857;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.control-panel__station-toggle--active {
+  border-color: rgba(16, 185, 129, 0.34);
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.98), rgba(224, 242, 254, 0.92));
+  color: #047857;
 }
 
 .control-panel__search {
@@ -580,7 +674,8 @@
   }
 
   .control-panel__coord,
-  .control-panel__place-name {
+  .control-panel__place-name,
+  .control-panel__place-primary {
     font-size: 12px;
     line-height: 1.2;
   }

@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
 const VIETMAP_BASE = 'https://maps.vietmap.vn/api';
 const VIETMAP_SERVICE_API_KEY = import.meta.env.VITE_VIETMAP_SERVICE_API_KEY;

@@ -115,6 +115,46 @@ docker compose up --build
 
 ---
 
+## Free Fixed Link: Render
+
+Use Render when you need a stable public link that keeps working after your
+local machine is shut down or restarted.
+
+This repo includes `render.yaml` with two free services:
+
+- `tasco-map-api`: Node backend web service.
+- `tasco-map-web`: Vite static frontend.
+
+### Steps
+
+1. Push this repo/branch to GitHub.
+2. Open Render Dashboard.
+3. Choose **New > Blueprint**.
+4. Select this repository and branch.
+5. Render reads `render.yaml` and creates both services.
+6. Add these secret values when Render asks:
+   - `VIETMAP_SERVICE_API_KEY` for backend.
+   - `VITE_VIETMAP_SERVICE_API_KEY` for frontend search.
+   - `VITE_VIETMAP_TILE_API_KEY` for frontend Vietmap tiles.
+7. Deploy.
+
+Expected URLs:
+
+```text
+API: https://tasco-map-api.onrender.com
+Web: https://tasco-map-web.onrender.com
+```
+
+If Render gives the API service a different URL, update the static site's
+`VITE_API_BASE_URL` env var to that API origin and redeploy the static site.
+
+### Free Tier Notes
+
+Render free web services can sleep after being idle. The first request after an
+idle period may be slow, but the URL stays fixed.
+
+---
+
 ## Troubleshooting
 
 ### White screen after deploy

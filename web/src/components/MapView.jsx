@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapContainer,
   Marker,
@@ -293,35 +293,67 @@ function buildChargingPopupHtml(stop, index) {
 }
 
 function StationPopup({ station }) {
+  const powerLevels = station.powerLevelsKw?.length
+    ? station.powerLevelsKw.map((level) => `${level}kW`).join(', ')
+    : null;
+  const rows = [
+    ['Provider', station.provider],
+    ['Station ID', station.providerStationId],
+    ['Distance', Number.isFinite(station.distanceKm) ? `${station.distanceKm.toFixed(1)} km` : null],
+    ['Connectors', station.connectorCount],
+    ['Max power', station.maxPowerKw ? `${station.maxPowerKw}kW` : null],
+    ['Power levels', powerLevels],
+    ['Connector detail', station.connectorSummary],
+    ['Access', station.accessInfo],
+    ['Coordinates', `${Number(station.lat).toFixed(5)}, ${Number(station.lng).toFixed(5)}`],
+  ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+
   return (
     <div className="station-popup">
       <strong>{station.name || 'Charging station'}</strong>
       {station.status && <span>{station.status}</span>}
       {station.address && <p>{station.address}</p>}
-      {(station.maxPowerKw || station.connectorSummary) && (
-        <small>
-          {station.maxPowerKw ? `${station.maxPowerKw}kW` : ''}
-          {station.maxPowerKw && station.connectorSummary ? ' · ' : ''}
-          {station.connectorSummary || ''}
-        </small>
-      )}
+      <div className="station-popup__grid">
+        {rows.map(([label, value]) => (
+          <Fragment key={label}>
+            <small>{label}</small>
+            <b>{value}</b>
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 }
 
 function buildStationPopupHtml(station) {
+  const powerLevels = station.powerLevelsKw?.length
+    ? station.powerLevelsKw.map((level) => `${level}kW`).join(', ')
+    : null;
+  const rows = [
+    ['Provider', station.provider],
+    ['Station ID', station.providerStationId],
+    ['Distance', Number.isFinite(station.distanceKm) ? `${station.distanceKm.toFixed(1)} km` : null],
+    ['Connectors', station.connectorCount],
+    ['Max power', station.maxPowerKw ? `${station.maxPowerKw}kW` : null],
+    ['Power levels', powerLevels],
+    ['Connector detail', station.connectorSummary],
+    ['Access', station.accessInfo],
+    ['Coordinates', `${Number(station.lat).toFixed(5)}, ${Number(station.lng).toFixed(5)}`],
+  ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+
   return `
     <div class="station-popup station-popup--html">
       <strong>${escapeHtml(station.name || 'Charging station')}</strong>
       ${station.status ? `<span>${escapeHtml(station.status)}</span>` : ''}
       ${station.address ? `<p>${escapeHtml(station.address)}</p>` : ''}
-      ${
-        station.maxPowerKw || station.connectorSummary
-          ? `<small>${station.maxPowerKw ? `${escapeHtml(station.maxPowerKw)}kW` : ''}${
-              station.maxPowerKw && station.connectorSummary ? ' · ' : ''
-            }${station.connectorSummary ? escapeHtml(station.connectorSummary) : ''}</small>`
-          : ''
-      }
+      <div class="station-popup__grid">
+        ${rows
+          .map(
+            ([label, value]) =>
+              `<small>${escapeHtml(label)}</small><b>${escapeHtml(value)}</b>`,
+          )
+          .join('')}
+      </div>
     </div>
   `;
 }

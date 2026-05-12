@@ -51,6 +51,7 @@ export default function App() {
   const placeSearchRequestRef = useRef(0);
   const stationRequestRef = useRef(0);
   const [stations, setStations] = useState([]);
+  const [showStations, setShowStations] = useState(false);
   const [recentRoutes, setRecentRoutes] = useState(loadRecentRoutes);
   const [placingMode, setPlacingMode] = useState(null); // 'start' | 'destination' | null
   const [routeResult, setRouteResult] = useState(null);
@@ -81,6 +82,12 @@ export default function App() {
   useEffect(() => {
     const requestId = stationRequestRef.current + 1;
     stationRequestRef.current = requestId;
+
+    if (!showStations) {
+      setStations([]);
+      return;
+    }
+
     const points = [start, destination].filter(Boolean);
     const lookupPoints = points.length > 0
       ? points
@@ -101,7 +108,7 @@ export default function App() {
       .catch(() => {
         if (stationRequestRef.current === requestId) setStations([]);
       });
-  }, [destination, start]);
+  }, [destination, showStations, start]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -287,7 +294,10 @@ export default function App() {
 
   return (
     <div className="app">
-      <MapSidebar />
+      <MapSidebar
+        showStations={showStations}
+        onToggleStations={() => setShowStations((value) => !value)}
+      />
       <ControlPanel
         vehicles={vehicles}
         selectedVehicle={selectedVehicle}
@@ -312,6 +322,8 @@ export default function App() {
         googleMapsUrl={googleMapsUrl}
         recentRoutes={recentRoutes}
         onSelectRecentRoute={handleSelectRecentRoute}
+        showStations={showStations}
+        onToggleStations={() => setShowStations((value) => !value)}
         loading={loading}
         error={error}
       />
@@ -321,7 +333,7 @@ export default function App() {
           start={start}
           destination={destination}
           chargingStops={routeResult?.chargingStops || []}
-          stations={stations}
+          stations={showStations ? stations : []}
           routeGeometry={routeResult?.routeGeometry || null}
           placingMode={placingMode}
           mapProvider={mapProvider}

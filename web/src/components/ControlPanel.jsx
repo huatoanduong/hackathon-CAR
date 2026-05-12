@@ -25,6 +25,8 @@ export default function ControlPanel({
   googleMapsUrl,
   recentRoutes = [],
   onSelectRecentRoute,
+  showStations = false,
+  onToggleStations,
   loading,
   error,
 }) {
@@ -103,46 +105,61 @@ export default function ControlPanel({
     point,
     placeLabel,
     showCurrentLocation = false,
-  }) => (
-    <div className="control-panel__location">
-      <label>{label}</label>
-      <div className="control-panel__location-body">
-        <span
-          className={
-            point
-              ? 'control-panel__coord'
-              : 'control-panel__coord control-panel__coord--empty'
-          }
-        >
-          {point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : 'Not set'}
-        </span>
-        {placeLabel && <span className="control-panel__place-name">{placeLabel}</span>}
-      </div>
-      <div className="control-panel__location-actions">
-        {showCurrentLocation ? (
+  }) => {
+    const genericLabels = new Set([
+      'Current location',
+      'Pinned on map',
+      'Adjusted manually',
+      'Recent start',
+      'Recent destination',
+    ]);
+    const displayLabel = placeLabel && !genericLabels.has(placeLabel)
+      ? placeLabel
+      : '';
+    const fallback = point
+      ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}`
+      : 'Not set';
+
+    return (
+      <div className={`control-panel__location control-panel__location--${type}`}>
+        <label>{label}</label>
+        <div className="control-panel__location-body">
+          <span
+            className={
+              displayLabel || point
+                ? 'control-panel__place-primary'
+                : 'control-panel__place-primary control-panel__place-primary--empty'
+            }
+          >
+            {displayLabel || fallback}
+          </span>
+        </div>
+        <div className="control-panel__location-actions">
+          {showCurrentLocation ? (
+            <button
+              className="control-panel__icon-btn"
+              onClick={onUseCurrentLocation}
+              title="Use current location"
+              type="button"
+            >
+              ◎
+            </button>
+          ) : (
+            <span className="control-panel__action-spacer" aria-hidden="true" />
+          )}
           <button
-            className="control-panel__icon-btn"
-            onClick={onUseCurrentLocation}
-            title="Use current location"
+            className={`control-panel__pin-btn ${
+              placingMode === type ? 'control-panel__pin-btn--active' : ''
+            }`}
+            onClick={() => onPlacingModeChange(placingMode === type ? null : type)}
             type="button"
           >
-            ◎
+            {placingMode === type ? 'Placing...' : 'Set on map'}
           </button>
-        ) : (
-          <span className="control-panel__action-spacer" aria-hidden="true" />
-        )}
-        <button
-          className={`control-panel__pin-btn ${
-            placingMode === type ? 'control-panel__pin-btn--active' : ''
-          }`}
-          onClick={() => onPlacingModeChange(placingMode === type ? null : type)}
-          type="button"
-        >
-          {placingMode === type ? 'Placing...' : 'Set on map'}
-        </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <aside className="control-panel">
@@ -169,6 +186,17 @@ export default function ControlPanel({
         </button>
       </form>
       {renderPlaceResults('control-panel__results--hero')}
+
+      <button
+        type="button"
+        className={`control-panel__station-toggle ${
+          showStations ? 'control-panel__station-toggle--active' : ''
+        }`}
+        onClick={onToggleStations}
+      >
+        <span aria-hidden="true">EV</span>
+        {showStations ? 'Hide charging stations' : 'Show charging stations'}
+      </button>
 
       <section className="control-panel__section control-panel__section--locations">
         <h2 className="control-panel__heading">Locations</h2>
@@ -220,15 +248,15 @@ export default function ControlPanel({
                 onClick={() => onSelectRecentRoute?.(route)}
               >
                 <span className="control-panel__recent-icon" aria-hidden="true">
-                  ↗
+                  Go
                 </span>
                 <span className="control-panel__recent-body">
                   <strong>{route.destinationLabel || route.title}</strong>
                   <span>
-                    {route.startLabel || 'Start'} ·{' '}
+                    {route.startLabel || 'Start'} /{' '}
                     {Number.isFinite(route.distanceKm)
                       ? `${Math.round(route.distanceKm)} km`
-                      : 'Recent route'} · {route.chargingStopCount || 0} stops
+                      : 'Recent route'} / {route.chargingStopCount || 0} stops
                   </span>
                 </span>
               </button>
