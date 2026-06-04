@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ev_route_planner}
+      POSTGRES_USER: ${POSTGRES_USER:-ev_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ev_app_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ev_app} -d ${POSTGRES_DB:-ev_route_planner}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://ev_app:ev_app_password@db:5432/ev_route_planner}
+      PORT: ${PORT:-3000}
+      HOST: ${HOST:-0.0.0.0}
+      NODE_ENV: ${NODE_ENV:-production}
+      ROUTING_BASE_URL: ${ROUTING_BASE_URL:-http://router.project-osrm.org}
+      ROUTING_TIMEOUT_MS: ${ROUTING_TIMEOUT_MS:-10000}
+      STATION_SEARCH_RADIUS_KM: ${STATION_SEARCH_RADIUS_KM:-5}
+      ROUTE_CORRIDOR_RADIUS_KM: ${ROUTE_CORRIDOR_RADIUS_KM:-3}
+      STATION_INGEST_CRON: ${STATION_INGEST_CRON:-0 */6 * * *}
+      STATION_DATA_PATH: ${STATION_DATA_PATH:-/app/data/ev-stations.raw.json}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/worker/index.js"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://ev_app:ev_app_password@db:5432/ev_route_planner}
+      NODE_ENV: ${NODE_ENV:-production}
+      ROUTING_BASE_URL: ${ROUTING_BASE_URL:-http://router.project-osrm.org}
+      ROUTING_TIMEOUT_MS: ${ROUTING_TIMEOUT_MS:-10000}
+      STATION_SEARCH_RADIUS_KM: ${STATION_SEARCH_RADIUS_KM:-5}
+      ROUTE_CORRIDOR_RADIUS_KM: ${ROUTE_CORRIDOR_RADIUS_KM:-3}
+      STATION_INGEST_CRON: ${STATION_INGEST_CRON:-0 */6 * * *}
+      STATION_DATA_PATH: ${STATION_DATA_PATH:-/app/data/ev-stations.raw.json}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
