@@ -1,0 +1,392 @@
+# API_REFERENCE.md
+> All API endpoints, request/response shapes, and data models.
+> Agents: always update this file when adding or modifying an endpoint.
+
+---
+
+## Base URL
+
+```
+Development:  http://localhost:8000
+Production:   configured via VITE_API_BASE_URL env var
+```
+
+All endpoints return `application/json`. All requests that include a body send `Content-Type: application/json`.
+
+---
+
+## Endpoints
+
+### GET /vehicles
+Returns the list of supported EV vehicle models.
+
+**Request:** No body, no params.
+
+**Response 200:**
+```json
+[
+  {
+    "id": "tesla-model-3",
+    "name": "Tesla Model 3",
+    "battery_capacity_kwh": 75,
+    "range_km": 500,
+    "charge_rate_kw": 250
+  }
+]
+```
+
+**Used by:** `ControlPanel` (vehicle selector dropdown)
+
+---
+
+### POST /route
+Plans an EV route with charging stops.
+
+**Request body:**
+```json
+{
+  "origin": { "lat": 10.8231, "lng": 106.6297 },
+  "destination": { "lat": 21.0285, "lng": 105.8542 },
+  "vehicle_id": "tesla-model-3",
+  "battery_level_pct": 80,
+  "min_charge_pct": 20
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `origin` | LatLng | Starting map point |
+| `destination` | LatLng | Ending map point |
+| `vehicle_id` | string | Must match an ID from `/vehicles` |
+| `battery_level_pct` | integer 0–100 | Current battery percentage |
+| `min_charge_pct` | integer 0–100 | Stop to charge when battery hits this level |
+
+**Response 200:**
+```json
+{
+  "polyline": [
+    { "lat": 10.8231, "lng": 106.6297 },
+    { "lat": 11.5645, "lng": 107.1234 }
+  ],
+  "stops": [
+    {
+      "station_id": "evn-station-042",
+      "name": "EVN Charging Hub Bien Hoa",
+      "location": { "lat": 10.9453, "lng": 106.8234 },
+      "arrival_battery_pct": 22,
+      "charge_to_pct": 80,
+      "estimated_charge_time_min": 35
+    }
+  ],
+  "total_distance_km": 1726,
+  "total_duration_min": 1380,
+  "feasible": true
+}
+```
+
+**Response 422 (infeasible route):**
+```json
+{
+  "feasible": false,
+  "reason": "No charging stations available along this corridor"
+}
+```
+
+**Used by:** `App.jsx` → `api.js` → dispatches result to `MapView` + `RouteDetailPanel`
+
+---
+
+### GET /stations
+Returns all EV charging stations (for map display).
+
+**Response 200:**
+```json
+[
+  {
+    "id": "evn-station-042",
+    "name": "EVN Charging Hub Bien Hoa",
+    "location": { "lat": 10.9453, "lng": 106.8234 },
+    "connector_types": ["CCS2", "CHAdeMO"],
+    "max_power_kw": 150,
+    "available_slots": 4
+  }
+]
+```
+
+**Status:** Not yet implemented in backend.
+
+---
+
+## Data Models
+
+### LatLng
+```typescript
+{ lat: number, lng: number }
+```
+
+### ChargingStop
+```typescript
+{
+  station_id: string,
+  name: string,
+  location: LatLng,
+  arrival_battery_pct: number,   // battery % when arriving
+  charge_to_pct: number,         // battery % to charge up to
+  estimated_charge_time_min: number
+}
+```
+
+### RouteResult
+```typescript
+{
+  polyline: LatLng[],
+  stops: ChargingStop[],
+  total_distance_km: number,
+  total_duration_min: number,
+  feasible: boolean,
+  reason?: string               // only present when feasible: false
+}
+```
+
+---
+
+## Error Handling
+
+All errors follow this shape:
+```json
+{
+  "error": "human readable message",
+  "code": "MACHINE_READABLE_CODE"
+}
+```
+
+HTTP status codes:
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 400 | Bad request (invalid input) |
+| 422 | Unprocessable (route not feasible) |
+| 500 | Server error |
+
+---
+
+## Frontend API Client (`web/src/services/api.js`)
+
+All calls go through this file. When adding a new endpoint:
+1. Add a new exported async function here
+2. Document it in this file
+3. Never make `fetch()` calls directly from a component
+
+```javascript
+// Example pattern:
+export async function planRoute(payload) {
+  const res = await fetch(`${BASE_URL}/route`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+```
+
+---
+
+*Last updated: 2026-05-09 | Status: Backend not yet implemented — these are the planned contracts*
+# API_REFERENCE.md
+> All API endpoints, request/response shapes, and data models.
+> Agents: always update this file when adding or modifying an endpoint.
+
+---
+
+## Base URL
+
+```
+Development:  http://localhost:8000
+Production:   configured via VITE_API_BASE_URL env var
+```
+
+All endpoints return `application/json`. All requests that include a body send `Content-Type: application/json`.
+
+---
+
+## Endpoints
+
+### GET /vehicles
+Returns the list of supported EV vehicle models.
+
+**Request:** No body, no params.
+
+**Response 200:**
+```json
+[
+  {
+    "id": "tesla-model-3",
+    "name": "Tesla Model 3",
+    "battery_capacity_kwh": 75,
+    "range_km": 500,
+    "charge_rate_kw": 250
+  }
+]
+```
+
+**Data source:** `data/ev-cars.raw.json` (generated by `scripts/fetch_ev_cars.py`)
+
+**Used by:** `ControlPanel` (vehicle selector dropdown)
+
+---
+
+### POST /route
+Plans an EV route with charging stops.
+
+**Request body:**
+```json
+{
+  "origin": { "lat": 10.8231, "lng": 106.6297 },
+  "destination": { "lat": 21.0285, "lng": 105.8542 },
+  "vehicle_id": "tesla-model-3",
+  "battery_level_pct": 80,
+  "min_charge_pct": 20
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `origin` | LatLng | Starting map point |
+| `destination` | LatLng | Ending map point |
+| `vehicle_id` | string | Must match an ID from `/vehicles` |
+| `battery_level_pct` | integer 0–100 | Current battery percentage |
+| `min_charge_pct` | integer 0–100 | Stop to charge when battery hits this level |
+
+**Response 200:**
+```json
+{
+  "polyline": [
+    { "lat": 10.8231, "lng": 106.6297 },
+    { "lat": 11.5645, "lng": 107.1234 }
+  ],
+  "stops": [
+    {
+      "station_id": "evn-station-042",
+      "name": "EVN Charging Hub Bien Hoa",
+      "location": { "lat": 10.9453, "lng": 106.8234 },
+      "arrival_battery_pct": 22,
+      "charge_to_pct": 80,
+      "estimated_charge_time_min": 35
+    }
+  ],
+  "total_distance_km": 1726,
+  "total_duration_min": 1380,
+  "feasible": true
+}
+```
+
+**Response 422 (infeasible route):**
+```json
+{
+  "feasible": false,
+  "reason": "No charging stations available along this corridor"
+}
+```
+
+**Used by:** `App.jsx` → `api.js` → dispatches result to `MapView` + `RouteDetailPanel`
+
+---
+
+### GET /stations
+Returns all EV charging stations (for map display).
+
+**Response 200:**
+```json
+[
+  {
+    "id": "evn-station-042",
+    "name": "EVN Charging Hub Bien Hoa",
+    "location": { "lat": 10.9453, "lng": 106.8234 },
+    "connector_types": ["CCS2", "CHAdeMO"],
+    "max_power_kw": 150,
+    "available_slots": 4
+  }
+]
+```
+
+**Status:** Not yet implemented in backend.
+
+---
+
+## Data Models
+
+### LatLng
+```typescript
+{ lat: number, lng: number }
+```
+
+### ChargingStop
+```typescript
+{
+  station_id: string,
+  name: string,
+  location: LatLng,
+  arrival_battery_pct: number,   // battery % when arriving
+  charge_to_pct: number,         // battery % to charge up to
+  estimated_charge_time_min: number
+}
+```
+
+### RouteResult
+```typescript
+{
+  polyline: LatLng[],
+  stops: ChargingStop[],
+  total_distance_km: number,
+  total_duration_min: number,
+  feasible: boolean,
+  reason?: string               // only present when feasible: false
+}
+```
+
+---
+
+## Error Handling
+
+All errors follow this shape:
+```json
+{
+  "error": "human readable message",
+  "code": "MACHINE_READABLE_CODE"
+}
+```
+
+HTTP status codes:
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 400 | Bad request (invalid input) |
+| 422 | Unprocessable (route not feasible) |
+| 500 | Server error |
+
+---
+
+## Frontend API Client (`web/src/services/api.js`)
+
+All calls go through this file. When adding a new endpoint:
+1. Add a new exported async function here
+2. Document it in this file
+3. Never make `fetch()` calls directly from a component
+
+```javascript
+// Example pattern:
+export async function planRoute(payload) {
+  const res = await fetch(`${BASE_URL}/route`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+```
+
+---
+
+*Last updated: 2026-05-09 | Status: Backend not yet implemented — these are the planned contracts*

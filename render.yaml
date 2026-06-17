@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: tasco-map-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22
+      - key: STORAGE_MODE
+        value: json
+      - key: HOST
+        value: 0.0.0.0
+      - key: ROUTING_BASE_URL
+        value: http://router.project-osrm.org
+      - key: ROUTING_TIMEOUT_MS
+        value: 10000
+      - key: VIETMAP_ROUTING_BASE_URL
+        value: https://maps.vietmap.vn
+      - key: STATION_SEARCH_RADIUS_KM
+        value: 100
+      - key: ROUTE_CORRIDOR_RADIUS_KM
+        value: 8
+      - key: STATION_DATA_PATH
+        value: ../data/ev-stations.raw.json
+      - key: VEHICLE_DATA_PATH
+        value: ../data/ev-cars.raw.json
+      - key: VIETMAP_SERVICE_API_KEY
+        sync: false
+
+  - type: static
+    name: tasco-map-web
+    rootDir: web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: VITE_API_BASE_URL
+        value: https://tasco-map-api.onrender.com
+      - key: VITE_VIETMAP_TILE_API_KEY
+        sync: false
+      - key: VITE_VIETMAP_SERVICE_API_KEY
+        sync: false

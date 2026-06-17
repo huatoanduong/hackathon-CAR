@@ -1,0 +1,37 @@
+.app {
+  position: relative;
+  display: block;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app__main {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  min-height: 0;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --mobile-panel-height: clamp(430px, 56dvh, 540px);
+  }
+
+  .app {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) var(--mobile-panel-height);
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .app__main {
+    position: relative;
+    grid-row: 1 / 2;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
